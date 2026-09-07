@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 from core.models import session_factory, Payment, PaymentType
 from services.localization import localization
-from parsing.parser import process_sber_pdf
 
 
 class FinanceBuilder(Builder):
@@ -19,18 +18,15 @@ class FinanceBuilder(Builder):
         )
         fab = self._build_fab("/add_payment", localization.add_operation)
 
-        async def _on_file_picker_result(e: ft.FilePickerUploadEvent):
-            if e.files:
-                file = e.files[0]
-                if file.file_name.endswith(".pdf"):
-                    self.connector.save_statement(file.path)
-
-        file_picker = ft.FilePicker(on_upload=_on_file_picker_result)
+        file_picker = ft.FilePicker()
 
         async def pick_pdf_click(e):
-            await file_picker.pick_files(
+            files = await file_picker.pick_files(
                 allow_multiple=False, file_type=ft.FilePickerFileType.ANY
             )
+            file = files[0]
+            if self.connector.save_statement(file.path):
+                self.page.update()
 
         upload_button = ft.TextButton(
             "Импортировать выписку PDF",

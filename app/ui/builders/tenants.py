@@ -1,6 +1,7 @@
 import flet as ft
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+import logging
 
 from core.models import session_factory, Tenant
 from services.localization import localization
@@ -126,55 +127,36 @@ class TenantBuilder(Builder):
         )
 
     def build_add_tenant_view(self, db: Session = session_factory()) -> ft.View:
-        avatar_path = None
-        passport_path = None
-        sub_passport_path = None
-        drive_license_path = None
+        paths = {
+            "avatar": None,
+            "passport": None,
+            "sub_passport": None,
+            "drive_license": None
+        }
 
-        async def _on_avatar_picker_result(self, e: ft.FilePickerUploadEvent):
-            if e.files:
-                nonlocal avatar_path
-                avatar_path = e.files[0].path
+        avatar_picker = ft.FilePicker()
+        passport_picker = ft.FilePicker()
+        sub_passport_picker = ft.FilePicker()
+        drive_license_picker = ft.FilePicker()
 
-        async def _on_passport_picker_result(self, e: ft.FilePickerUploadEvent):
-            if e.files:
-                nonlocal passport_path
-                passport_path = e.files[0].path
+        def make_picker_callback(picker: ft.FilePicker, path_key: str):
+            async def callback(e):
+                files = await picker.pick_files(
+                    allow_multiple=False,
+                    file_type=ft.FilePickerFileType.IMAGE
+                )
+                if files:
+                    paths[path_key] = files[0].path
+                    logging.info(f"Файл для {path_key} успешно сохранен: {paths[path_key]}")
+            return callback
 
-        async def _on_sub_passport_picker_result(self, e: ft.FilePickerUploadEvent):
-            if e.files:
-                nonlocal sub_passport_path
-                sub_passport_path = e.files[0].path
+        pick_avatar_click = make_picker_callback(avatar_picker, "avatar")
 
-        async def _on_drive_license_picker_result(self, e: ft.FilePickerUploadEvent):
-            if e.files:
-                nonlocal drive_license_path
-                drive_license_path = e.files[0].path
+        pick_passport_click = make_picker_callback(passport_picker, "passport")
 
-        avatar_picker = ft.FilePicker(on_upload=_on_avatar_picker_result)
-        passport_picker = ft.FilePicker(on_upload=_on_passport_picker_result)
-        sub_passport_picker = ft.FilePicker(on_upload=_on_sub_passport_picker_result)
-        drive_license_picker = ft.FilePicker(on_upload=_on_drive_license_picker_result)
+        pick_sub_passport_click = make_picker_callback(sub_passport_picker, "sub_passport")
 
-        async def pick_avatar_click(e):
-            await avatar_picker.pick_files(
-                allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
-            )
-
-        async def pick_passport_click(e):
-            await passport_picker.pick_files(
-                allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
-            )
-
-        async def pick_sub_passport_click(e):
-            await sub_passport_picker.pick_files(
-                allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
-            )
-
-        async def pick_drive_license_click(e):
-            await drive_license_picker.pick_files(
-                allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
-            )
+        pick_drive_license_click = make_picker_callback(drive_license_picker, "drive_license")
 
         async def save_tenant(e=None):
             new_tenant = Tenant(
@@ -186,35 +168,19 @@ class TenantBuilder(Builder):
             )
             db.add(new_tenant)
             db.commit()
+            db.refresh(new_tenant)
 
-            if avatar_path:
-                await self.connector.save_image(
-                    image_path=avatar_path,
-                    object_id=new_tenant.id,
-                    object_type="tenant",
-                    category="avatar",
-                )
-            if passport_path:
-                await self.connector.save_image(
-                    image_path=passport_path,
-                    object_id=new_tenant.id,
-                    object_type="tenant",
-                    category="passport",
-                )
-            if sub_passport_path:
-                await self.connector.save_image(
-                    image_path=sub_passport_path,
-                    object_id=new_tenant.id,
-                    object_type="tenant",
-                    category="sub_passport",
-                )
-            if drive_license_path:
-                await self.connector.save_image(
-                    image_path=drive_license_path,
-                    object_id=new_tenant.id,
-                    object_type="tenant",
-                    category="drive_license",
-                )
+            for img_category in ["avatar", "passport", "sub_passport", "drive_license"]:
+                img_path = paths.get(img_category)
+
+                if img_path:
+                    await self.connector.save_image(
+                        image_path=img_path,
+                        object_id=new_tenant.id,
+                        object_type="tenant",
+                        category=img_category,
+                        db=db
+                    )
 
             self._build_complete_snack_bar()
             self.page.go("/tenants")
