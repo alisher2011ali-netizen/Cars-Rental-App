@@ -94,7 +94,9 @@ class FirstLaunchBuilder(Builder):
             horizontal_alignment=ft.Alignment.CENTER,
             spacing=20,
         )
-        return ft.View(route="/first_launch", controls=[content])
+        return ft.View(
+            route="/first_launch", controls=[content], scroll=ft.ScrollMode.AUTO
+        )
 
     async def _on_continue(self, e):
         await self.page.shared_preferences.set("is_first_launch", False)

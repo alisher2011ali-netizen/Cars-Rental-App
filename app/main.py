@@ -4,8 +4,8 @@ import os
 import asyncio
 
 from core.models import init_db
+from core.logging import setup_logging
 from ui.router import UIRouter
-from services.logging import setup_logging
 
 
 async def main(page: ft.Page):

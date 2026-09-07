@@ -1,8 +1,8 @@
-main.db
+*.db
 logs/
 test_statement.pdf
 Cars-Rental-App.code-workspace
-changes.diff
+*.diff
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

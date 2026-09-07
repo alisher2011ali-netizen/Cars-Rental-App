@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 from core.models import session_factory, Payment, PaymentType
 from services.localization import localization
-from parsing.parser import process_sber_pdf
 
 
 class FinanceBuilder(Builder):
@@ -19,18 +18,15 @@ class FinanceBuilder(Builder):
         )
         fab = self._build_fab("/add_payment", localization.add_operation)
 
-        async def _on_file_picker_result(e: ft.FilePickerUploadEvent):
-            if e.files:
-                file = e.files[0]
-                if file.file_name.endswith(".pdf"):
-                    self.connector.save_statement(file.path)
-
-        file_picker = ft.FilePicker(on_upload=_on_file_picker_result)
+        file_picker = ft.FilePicker()
 
         async def pick_pdf_click(e):
-            await file_picker.pick_files(
+            files = await file_picker.pick_files(
                 allow_multiple=False, file_type=ft.FilePickerFileType.ANY
             )
+            file = files[0]
+            if self.connector.save_statement(file.path):
+                self.page.update()
 
         upload_button = ft.TextButton(
             "Импортировать выписку PDF",
@@ -55,6 +51,7 @@ class FinanceBuilder(Builder):
                 route="/finances",
                 navigation_bar=self._get_nav_bar(4),
                 controls=[
+                    # Сюда нужно вернуть file_picker, если он там нужен по твоей логике
                     ft.Container(
                         content=ft.Column(
                             [
@@ -65,7 +62,6 @@ class FinanceBuilder(Builder):
                                         weight="bold",
                                     )
                                 ),
-                                title,
                                 upload_button,
                                 empty_message,
                             ]
@@ -85,7 +81,11 @@ class FinanceBuilder(Builder):
 
         for payment in payments_list:
             payment_type = "+" if payment.type == PaymentType.income else "-"
-            text_color = ft.Colors.GREEN_500 if payment.type else ft.Colors.RED_500
+            text_color = (
+                ft.Colors.GREEN_500
+                if payment.type == PaymentType.income
+                else ft.Colors.RED_500
+            )
             if not payment.is_parsed:
                 payment_card = ft.Container(
                     content=ft.Column(
@@ -199,6 +199,13 @@ class FinanceBuilder(Builder):
 
     def build_add_payment_view(self, db: Session = session_factory()) -> ft.View:
         def save_payment(e):
+            if not amount_input.value.isdigit():
+                amount_input.value = ""
+                error_text.value = f"{localization.amount_only_can_be_digit}!"
+                error_container.visible = True
+                self.page.update()
+                return
+
             payment_type = (
                 PaymentType.income
                 if type_dropdown.value == "income"
@@ -212,7 +219,7 @@ class FinanceBuilder(Builder):
             db.add(new_payment)
             db.commit()
 
-            self._build_complete_snack_bar()
+            self.page.overlay.append(self._build_complete_snack_bar())
             self.page.go("/finances")
 
         amount_input = ft.TextField(label=localization.amount, width=300)
@@ -224,6 +231,27 @@ class FinanceBuilder(Builder):
             ],
             value="income",
             width=200,
+        )
+        error_text = ft.Text(
+            value="",
+            color=ft.Colors.WHITE,
+            size=13,
+            expand=True,
+        )
+
+        error_container = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.ERROR_OUTLINE, color=ft.Colors.WHITE, size=20),
+                    error_text,
+                ],
+                alignment=ft.MainAxisAlignment.START,
+            ),
+            width=300,
+            bgcolor=ft.Colors.RED_400,
+            border_radius=8,
+            padding=8,
+            visible=False,
         )
         save_button = ft.ElevatedButton(
             localization.save,
@@ -242,6 +270,7 @@ class FinanceBuilder(Builder):
                     amount_input,
                     comment_input,
                     type_dropdown,
+                    error_container,
                     save_button,
                 ],
             ),

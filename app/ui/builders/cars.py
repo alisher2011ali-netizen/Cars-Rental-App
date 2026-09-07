@@ -84,21 +84,18 @@ class CarBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_car_view(self) -> ft.View:
+    def build_add_car_view(self, db: Session = session_factory()) -> ft.View:
         selected_images_paths = []
 
-        async def _on_file_picker_result(e: ft.FilePickerUploadEvent):
-            if e.files:
-                for file in e.files:
-                    if file.path not in selected_images_paths:
-                        selected_images_paths.append(file.path)
-
-        file_picker = ft.FilePicker(on_upload=_on_file_picker_result)
+        file_picker = ft.FilePicker()
 
         async def pick_image_click(e):
-            await file_picker.pick_files(
+            files = await file_picker.pick_files(
                 allow_multiple=True, file_type=ft.FilePickerFileType.IMAGE
             )
+            for file in files:
+                if file.path not in selected_images_paths:
+                    selected_images_paths.append(file.path)
 
         async def save_car(e=None):
             new_car = Car(
@@ -107,8 +104,8 @@ class CarBuilder(Builder):
                 year=year_input.value,
                 plate_number=plate_num_input.value,
             )
-            self.db.add(new_car)
-            self.db.commit()
+            db.add(new_car)
+            db.commit()
 
             for image_path in selected_images_paths:
                 await self.connector.save_image(

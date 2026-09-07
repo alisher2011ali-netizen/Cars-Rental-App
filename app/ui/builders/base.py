@@ -159,6 +159,7 @@ class Builder:
             content=ft.Text(localization.added_successfully),
             action=ft.SnackBarAction(label="OK"),
             duration=ft.Duration(seconds=5),
+            open=True,
         )
 
     def _build_not_data_container(

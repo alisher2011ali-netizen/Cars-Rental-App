@@ -67,5 +67,6 @@
     "weekly": "Еженедельно",
     "monthly": "Ежемесячно",
     "custom": "Другое",
-    "total_to_be_paid": "Итог"
+    "total_to_be_paid": "Итог",
+    "amount_only_can_be_digit": "Сумма может быть записана только числом"
 }

@@ -86,6 +86,7 @@ class UIRouter:
 
         # Only after we have the view, we try to update the page. This way we avoid clearing the page if view creation fails.
         try:
+            view.scroll = ft.ScrollMode.AUTO
             self.page.views.clear()
             self.page.views.append(view)
             self.page.update()
