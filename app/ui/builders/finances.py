@@ -185,7 +185,6 @@ class FinanceBuilder(Builder):
                     bgcolor=ft.Colors.BLUE_50,
                     padding=10,
                     border_radius=8,
-                    border=ft.border.all(1, ft.Colors.BLUE_100),
                 )
                 payments_content.content.controls.append(payment_card)
 
