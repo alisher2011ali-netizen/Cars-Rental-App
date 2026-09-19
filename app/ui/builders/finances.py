@@ -81,39 +81,58 @@ class FinanceBuilder(Builder):
 
         for payment in payments_list:
             payment_type = "+" if payment.type == PaymentType.income else "-"
+
             text_color = (
-                ft.Colors.GREEN_500
+                ft.Colors.PRIMARY
                 if payment.type == PaymentType.income
-                else ft.Colors.RED_500
+                else ft.Colors.ERROR
             )
+
+            # 1. Избавляемся от двойных минусов с помощью abs()
+            # 2. Форматируем до 2 знаков после запятой и отрезаем пустые нули на конце
+            formatted_amount = f"{abs(payment.amount):.2f}".rstrip('0').rstrip('.')
+
             if not payment.is_parsed:
                 payment_card = ft.Container(
                     content=ft.Column(
                         [
                             ft.Row(
                                 [
-                                    ft.Text(
-                                        f"{payment_type}{payment.amount}",
-                                        size=14,
-                                        color=text_color,
+                                    ft.Row(
+                                        [
+                                            ft.Text(
+                                                f"{payment_type}{formatted_amount}",
+                                                size=16,
+                                                weight=ft.FontWeight.BOLD,
+                                                color=text_color,
+                                            ),
+                                            ft.Text(
+                                                localization.currency,
+                                                size=14,
+                                                color=ft.Colors.ON_SURFACE_VARIANT,
+                                            ),
+                                        ],
+                                        spacing=5,
                                     ),
-                                    ft.Text(localization.currency, size=14),
-                                ]
+                                ],
+                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                             ),
                             ft.Text(
-                                f"""{localization.comment}:
-{payment.comment}""",
+                                f"{localization.comment}:\n{payment.comment}",
                                 size=14,
+                                color=ft.Colors.ON_SURFACE_VARIANT, # Теперь текст не сольется с фоном
                             ),
                         ],
+                        spacing=5,
                     ),
-                    bgcolor=ft.Colors.WHITE,
-                    padding=5,
-                    border_radius=5,
+                    bgcolor=ft.Colors.SECONDARY_CONTAINER,
+                    padding=10,
+                    border_radius=8,
+                    border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
                 )
                 payments_content.content.controls.append(payment_card)
+
             elif payment.is_parsed:
-                # Безопасно форматируем дату операции, если она существует (например, 12.08.2026 14:30)
                 op_date_str = (
                     payment.operation_date.strftime("%d.%m.%Y %H:%M")
                     if payment.operation_date
@@ -123,33 +142,35 @@ class FinanceBuilder(Builder):
                 payment_card = ft.Container(
                     content=ft.Column(
                         [
-                            # Строка 1: Сумма, валюта и бейдж "Сбербанк"
                             ft.Row(
                                 [
                                     ft.Row(
                                         [
                                             ft.Text(
-                                                f"{payment_type}{payment.amount}",
+                                                f"{payment_type}{formatted_amount}", # Используем отформатированную сумму
                                                 size=16,
                                                 weight=ft.FontWeight.BOLD,
                                                 color=text_color,
                                             ),
-                                            ft.Text(localization.currency, size=14),
+                                            ft.Text(
+                                                localization.currency,
+                                                size=14,
+                                                color=ft.Colors.ON_SECONDARY_CONTAINER,
+                                            ),
                                         ],
                                         spacing=5,
                                     ),
-                                    # Визуальный индикатор, что это парсинг
                                     ft.Row(
                                         [
                                             ft.Icon(
                                                 ft.Icons.ACCOUNT_BALANCE,
                                                 size=14,
-                                                color=ft.Colors.BLUE_GREY_400,
+                                                color=ft.Colors.ON_SECONDARY_CONTAINER,
                                             ),
                                             ft.Text(
                                                 "Сбербанк",
                                                 size=12,
-                                                color=ft.Colors.BLUE_GREY_400,
+                                                color=ft.Colors.ON_SECONDARY_CONTAINER,
                                             ),
                                         ],
                                         spacing=2,
@@ -157,23 +178,24 @@ class FinanceBuilder(Builder):
                                 ],
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                             ),
-                            # Строка 2: Сырое описание из банка (имя отправителя, назначение)
                             ft.Text(
                                 payment.description or "Без описания",
                                 size=14,
                                 max_lines=2,
-                                overflow=ft.TextOverflow.ELLIPSIS,  # Добавляет "..." если текст слишком длинный
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                                color=ft.Colors.ON_SECONDARY_CONTAINER,
                             ),
-                            # Строка 3: Категория перевода и точная дата
                             ft.Row(
                                 [
                                     ft.Text(
                                         payment.category or "",
                                         size=12,
-                                        color=ft.Colors.GREY_600,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
                                     ),
                                     ft.Text(
-                                        op_date_str, size=12, color=ft.Colors.GREY_500
+                                        op_date_str,
+                                        size=12,
+                                        color=ft.Colors.ON_SURFACE_VARIANT
                                     ),
                                 ],
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -181,10 +203,10 @@ class FinanceBuilder(Builder):
                         ],
                         spacing=5,
                     ),
-                    # Легкий синеватый фон, чтобы визуально отделять от белых ручных записей
-                    bgcolor=ft.Colors.BLUE_50,
+                    bgcolor=ft.Colors.SECONDARY_CONTAINER,
                     padding=10,
                     border_radius=8,
+                    border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
                 )
                 payments_content.content.controls.append(payment_card)
 
