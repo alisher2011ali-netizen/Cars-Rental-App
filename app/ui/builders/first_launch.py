@@ -26,7 +26,6 @@ class FirstLaunchBuilder(Builder):
                         ft.Icon(
                             icon=ft.Icons.CAR_RENTAL,
                             size=100,
-                            color=ft.Colors.PRIMARY,
                             align=ft.Alignment.CENTER,
                         ),
                         ft.Text(
@@ -35,6 +34,7 @@ class FirstLaunchBuilder(Builder):
                             weight="bold",
                         ),
                     ],
+                    margin=20,
                 ),
                 ft.Text(
                     localization.hello_text,
@@ -55,7 +55,7 @@ class FirstLaunchBuilder(Builder):
                                 ft.DropdownOption(key="en", text="English"),
                                 ft.DropdownOption(key="zh", text="中文"),
                             ],
-                            value="ru",
+                            value=self.page.shared_preferences.get("language_code"),
                             width=200,
                             on_select=on_language_change,
                         ),
@@ -76,7 +76,7 @@ class FirstLaunchBuilder(Builder):
                                 ft.DropdownOption(key="CNY", text="CNY  ¥"),
                                 ft.DropdownOption(key="KGS", text="KGS"),
                             ],
-                            value="RUB",
+                            value=self.page.shared_preferences.get("currency"),
                             width=200,
                             on_select=on_currency_change,
                         ),

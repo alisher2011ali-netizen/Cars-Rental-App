@@ -71,8 +71,6 @@ class CarBuilder(Builder):
         cars_content = ft.Container(
             content=content,
             padding=20,
-            width=self.page.width,
-            height=self.page.height,
             expand=True,
         )
 

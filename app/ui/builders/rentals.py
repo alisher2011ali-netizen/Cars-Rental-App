@@ -112,11 +112,16 @@ class RentalBuilder(Builder):
         )
 
     def build_add_rental_view(self, db: Session = session_factory()) -> ft.View:
-        def on_car_select():
-            pass
+        selected_car_id = None
+        selected_tenant_id = None
 
-        def on_tenant_select():
-            pass
+        def on_car_select(e):
+            nonlocal selected_car_id
+            selected_car_id = e.control.value
+
+        def on_tenant_select(e):
+            nonlocal selected_tenant_id
+            selected_tenant_id = e.control.value
 
         cars = db.scalars(select(Car)).all()
         tenants = db.scalars(select(Tenant)).all()
@@ -157,10 +162,7 @@ class RentalBuilder(Builder):
             on_select=on_tenant_select,
         )
 
-        selected_car = None
-        selected_tenant = None
-
-        dates_info_text = ft.Text("Срок: 7 дней", size=16, weight="bold")
+        dates_info_text = ft.Text("Срок: 0 дней", size=16, weight="bold")
         total_price_text = ft.Text(
             f"{localization.total_to_be_paid}: 0 руб.",
             size=20,
@@ -285,7 +287,7 @@ class RentalBuilder(Builder):
             recalculate_total()
 
         tariff_radio = ft.RadioGroup(
-            content=ft.Row(
+            content=ft.Column(
                 [
                     ft.Radio(value="weekly", label=localization.weekly),
                     ft.Radio(value="monthly", label=localization.monthly),

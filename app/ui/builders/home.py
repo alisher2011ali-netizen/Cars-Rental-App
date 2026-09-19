@@ -12,7 +12,6 @@ class HomeBuilder(Builder):
             f"🚗 {localization.app_name}",
             size=28,
             weight="bold",
-            color=ft.Colors.BLUE_700,
         )
 
         if not last_added_cars:
@@ -54,8 +53,6 @@ class HomeBuilder(Builder):
                     ft.Container(
                         content=content,
                         padding=5,
-                        width=self.page.width,
-                        height=self.page.height - 80,
                     )
                 ],
             )
@@ -77,8 +74,7 @@ class HomeBuilder(Builder):
         subtitle = ft.Text(
             localization.last_added_cars,
             size=16,
-            weight="w500",
-            color=ft.Colors.GREY_800,
+            color=ft.Colors.ON_SURFACE_VARIANT,
         )
 
         content = ft.Column(
@@ -100,8 +96,6 @@ class HomeBuilder(Builder):
                     content=content,
                     padding=20,
                     bgcolor=ft.Colors.WHITE,
-                    width=self.page.width,
-                    height=self.page.height - 80,
                 )
             ],
         )

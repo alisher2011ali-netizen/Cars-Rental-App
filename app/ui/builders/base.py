@@ -62,15 +62,15 @@ class Builder:
                 height=200,
             )
 
-            def on_pan_update(e):
-                if e.delta_x > 50:
+            def on_horizontal_drag_update(e: ft.DragUpdateEvent):
+                if e.primary_delta > 50:
                     self._prev_image(car.id, car_images, image_container)
-                elif e.delta_x < -50:
+                elif e.primary_delta < -50:
                     self._next_image(car.id, car_images, image_container)
 
             image_with_swipe = ft.GestureDetector(
                 content=image_container,
-                on_pan_update=on_pan_update,
+                on_horizontal_drag_update=on_horizontal_drag_update,
             )
             indicator = ft.Text(
                 f"1/{len(car_images)}",

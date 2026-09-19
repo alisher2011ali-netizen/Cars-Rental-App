@@ -84,7 +84,7 @@ class TenantBuilder(Builder):
                                     ft.Column(
                                         [
                                             ft.Text(
-                                                f"{tenant.last_name} {tenant.first_name}",
+                                                tenant.name[:20],
                                                 size=20,
                                                 weight="bold",
                                                 width=200,
@@ -99,7 +99,7 @@ class TenantBuilder(Builder):
                                             ft.TextButton(
                                                 ft.Text(localization.details, size=16),
                                                 on_click=lambda e, t_id: self.page.go(
-                                                    f"/details_{t_id}"
+                                                    f"/tenants/{t_id}"
                                                 ),
                                             ),
                                         ],
@@ -151,18 +151,13 @@ class TenantBuilder(Builder):
             return callback
 
         pick_avatar_click = make_picker_callback(avatar_picker, "avatar")
-
         pick_passport_click = make_picker_callback(passport_picker, "passport")
-
         pick_sub_passport_click = make_picker_callback(sub_passport_picker, "sub_passport")
-
         pick_drive_license_click = make_picker_callback(drive_license_picker, "drive_license")
 
         async def save_tenant(e=None):
             new_tenant = Tenant(
-                last_name=last_name_input.value.strip(),
-                first_name=first_name_input.value.strip(),
-                middle_name=middle_name_input.value.strip(),
+                name=name_input.value.strip(),
                 phone_number=phone_input.value,
                 debt_sum=float(debt_sum_input.value) if debt_sum_input.value else 0.0,
             )
@@ -185,9 +180,7 @@ class TenantBuilder(Builder):
             self._build_complete_snack_bar()
             self.page.go("/tenants")
 
-        last_name_input = ft.TextField(label=localization.last_name, width=300)
-        first_name_input = ft.TextField(label=localization.first_name, width=300)
-        middle_name_input = ft.TextField(label=localization.middle_name, width=300)
+        name_input = ft.TextField(label=localization.fullname, width=300)
 
         phone_input = ft.TextField(label=localization.phone, width=300)
         debt_sum_input = ft.TextField(label=localization.debt_in_total, width=300)
@@ -195,30 +188,32 @@ class TenantBuilder(Builder):
             content=ft.Column(
                 [
                     ft.Text(localization.new_tenant, size=24, weight="bold"),
-                    last_name_input,
-                    first_name_input,
-                    middle_name_input,
+                    name_input,
                     phone_input,
                     debt_sum_input,
                     ft.TextButton(
                         localization.upload_avatar,
                         icon=ft.Icons.UPLOAD_FILE,
                         on_click=pick_avatar_click,
+                        margin=5,
                     ),
                     ft.TextButton(
                         localization.upload_passport,
                         icon=ft.Icons.UPLOAD_FILE,
                         on_click=pick_passport_click,
+                        margin=5,
                     ),
                     ft.TextButton(
                         localization.upload_subpassport,
                         icon=ft.Icons.UPLOAD_FILE,
                         on_click=pick_sub_passport_click,
+                        margin=5,
                     ),
                     ft.TextButton(
                         localization.upload_driver_license,
                         icon=ft.Icons.UPLOAD_FILE,
                         on_click=pick_drive_license_click,
+                        margin=5,
                     ),
                     ft.ElevatedButton(
                         localization.save,

@@ -51,7 +51,6 @@ class FinanceBuilder(Builder):
                 route="/finances",
                 navigation_bar=self._get_nav_bar(4),
                 controls=[
-                    # Сюда нужно вернуть file_picker, если он там нужен по твоей логике
                     ft.Container(
                         content=ft.Column(
                             [
