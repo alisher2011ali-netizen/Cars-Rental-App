@@ -5,14 +5,16 @@ from ui.builders.base import Builder
 
 
 class FirstLaunchBuilder(Builder):
+    def __init__(self, page):
+        super().__init__(page)
+        self.language = "ru"
+        self.currency = "RUB"
+
     def build_first_launch_view(self) -> ft.View:
-        language = "ru"
-        currency = "RUB"
         def on_language_change(e):
             selected_language = e.control.value
             self.page.shared_preferences.set("language_code", selected_language)
-            nonlocal language
-            language = selected_language
+            self.language = selected_language
             localization.load_lang(selected_language)
 
             self.page.views.clear()
@@ -21,8 +23,7 @@ class FirstLaunchBuilder(Builder):
         def on_currency_change(e):
             selected_currency = e.control.value
             self.page.shared_preferences.set("currency", selected_currency)
-            nonlocal currency
-            currency = selected_currency
+            self.currency = selected_currency
             localization.currency = selected_currency
 
         content = ft.Column(
@@ -61,7 +62,7 @@ class FirstLaunchBuilder(Builder):
                                 ft.DropdownOption(key="en", text="English"),
                                 ft.DropdownOption(key="zh", text="中文"),
                             ],
-                            value=language,
+                            value=self.language,
                             width=200,
                             on_select=on_language_change,
                         ),
@@ -82,7 +83,7 @@ class FirstLaunchBuilder(Builder):
                                 ft.DropdownOption(key="CNY", text="CNY  ¥"),
                                 ft.DropdownOption(key="KGS", text="KGS"),
                             ],
-                            value=currency,
+                            value=self.currency,
                             width=200,
                             on_select=on_currency_change,
                         ),
