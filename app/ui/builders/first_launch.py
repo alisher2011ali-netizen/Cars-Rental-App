@@ -13,7 +13,7 @@ class FirstLaunchBuilder(Builder):
     def build_first_launch_view(self) -> ft.View:
         def on_language_change(e):
             selected_language = e.control.value
-            self.page.shared_preferences.set("language_code", selected_language)
+            self.prefs.set("language_code", selected_language)
             self.language = selected_language
             localization.load_lang(selected_language)
 
@@ -22,7 +22,7 @@ class FirstLaunchBuilder(Builder):
 
         def on_currency_change(e):
             selected_currency = e.control.value
-            self.page.shared_preferences.set("currency", selected_currency)
+            self.prefs.set("currency", selected_currency)
             self.currency = selected_currency
             localization.currency = selected_currency
 
@@ -106,5 +106,5 @@ class FirstLaunchBuilder(Builder):
         )
 
     async def _on_continue(self, e):
-        await self.page.shared_preferences.set("is_first_launch", False)
-        self.page.go("/cars")
+        await self.prefs.set("is_first_launch", False)
+        self.page.push_route("/cars")

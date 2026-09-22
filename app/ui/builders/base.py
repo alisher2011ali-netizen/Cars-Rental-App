@@ -11,6 +11,7 @@ class Builder:
         page: ft.Page,
     ):
         self.page = page
+        self.prefs = ft.SharedPreferences()
         self.connector = Connector()
         self.current_image_indices = {}
 
@@ -41,15 +42,15 @@ class Builder:
     def _handle_nav_change(self, index: int):
         match index:
             case 0:
-                self.page.go("/")
+                self.page.push_route("/")
             case 1:
-                self.page.go("/cars")
+                self.page.push_route("/cars")
             case 2:
-                self.page.go("/tenants")
+                self.page.push_route("/tenants")
             case 3:
-                self.page.go("/rentals")
+                self.page.push_route("/rentals")
             case 4:
-                self.page.go("/finances")
+                self.page.push_route("/finances")
 
     def _create_car_card(self, car: Car, car_images: list[str] | None = None):
         car_images = car_images or []
@@ -179,7 +180,7 @@ class Builder:
                     ft.TextButton(
                         button_text,
                         icon=ft.Icons.ADD,
-                        on_click=lambda _: self.page.go(route),
+                        on_click=lambda _: self.page.push_route(route),
                         align=ft.Alignment.CENTER,
                     ),
                 ],
@@ -191,7 +192,7 @@ class Builder:
     def _build_fab(self, route: str, text: str) -> ft.FloatingActionButton:
         return ft.FloatingActionButton(
             icon=ft.Icons.ADD,
-            on_click=lambda e: self.page.go(route),
+            on_click=lambda e: self.page.push_route(route),
             tooltip=ft.Tooltip(text),
         )
 

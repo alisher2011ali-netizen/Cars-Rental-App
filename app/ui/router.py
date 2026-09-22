@@ -23,9 +23,9 @@ class UIRouter:
         self.page.on_route_change = self.route_change
         self.page.navigation_bar = self.builder._get_nav_bar(0)
         try:
-            if await self.page.shared_preferences.get("is_first_launch") != False:
+            if await self.builder.prefs.get("is_first_launch") != False:
                 fisrt_launch_builder = FirstLaunchBuilder(self.page)
-                await self.page.shared_preferences.set("is_first_launch", True)
+                await self.builder.prefs.set("is_first_launch", True)
                 view = fisrt_launch_builder.build_first_launch_view()
 
             else:

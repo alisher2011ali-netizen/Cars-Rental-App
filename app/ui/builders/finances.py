@@ -240,7 +240,7 @@ class FinanceBuilder(Builder):
             db.commit()
 
             self.page.overlay.append(self._build_complete_snack_bar())
-            self.page.go("/finances")
+            self.page.push_route("/finances")
 
         amount_input = ft.TextField(label=localization.amount, width=300)
         comment_input = ft.TextField(label=localization.comment, width=300)

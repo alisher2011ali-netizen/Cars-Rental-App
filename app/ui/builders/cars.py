@@ -111,7 +111,7 @@ class CarBuilder(Builder):
                 )
 
             self._build_complete_snack_bar()
-            self.page.go("/cars")
+            self.page.push_route("/cars")
 
         brand_input = ft.TextField(label=localization.brand, width=300)
         model_input = ft.TextField(label=localization.model, width=300)
@@ -138,7 +138,7 @@ class CarBuilder(Builder):
                     ft.ElevatedButton(
                         localization.back,
                         icon=ft.Icons.ARROW_BACK,
-                        on_click=lambda e: self.page.go("/cars"),
+                        on_click=lambda e: self.page.push_route("/cars"),
                     ),
                 ],
                 spacing=15,
