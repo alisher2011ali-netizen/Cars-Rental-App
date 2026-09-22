@@ -1,9 +1,8 @@
 import flet as ft
-from sqlalchemy.orm import Session
-from sqlalchemy import select
-
-from core.models import session_factory, Car
+from core.models import Car, session_factory
 from services.localization import localization
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 
 

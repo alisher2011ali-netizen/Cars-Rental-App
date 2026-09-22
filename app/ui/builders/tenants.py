@@ -1,5 +1,3 @@
-import logging
-
 import flet as ft
 from core.models import Tenant, session_factory
 from services.localization import localization
@@ -148,9 +146,6 @@ class TenantBuilder(Builder):
                 )
                 if files:
                     paths[path_key] = files[0].path
-                    logging.info(
-                        f"Файл для {path_key} успешно сохранен: {paths[path_key]}"
-                    )
 
             return callback
 

@@ -9,6 +9,8 @@ from ui.router import UIRouter
 
 async def main(page: ft.Page):
     try:
+        logger = logging.getLogger(__name__)
+
         init_db()
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,8 +30,8 @@ async def main(page: ft.Page):
         ui = UIRouter(page)
         await ui.build()
 
-    except Exception as ex:
-        logging.exception("An unexpected error occurred while running the app.")
+    except Exception:
+        logger.exception("An unexpected error occurred while running the app.")
 
 
 if __name__ == "__main__":

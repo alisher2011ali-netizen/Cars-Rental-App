@@ -1,9 +1,10 @@
-import flet as ft
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.orm import Session
-from sqlalchemy import select
-from core.models import session_factory, Car, Rental, Tenant
+
+import flet as ft
+from core.models import Car, Rental, Tenant, session_factory
 from services.localization import localization
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 
 

@@ -8,6 +8,8 @@ from services.file_manager import FileManager
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+logger = logging.getLogger(__name__)
+
 
 class Connector:
     def __init__(self):
@@ -36,7 +38,7 @@ class Connector:
                             base64.b64encode(image_bytes).decode("utf-8")
                         )
         except Exception as ex:
-            logging.exception(
+            logger.exception(
                 "An error occurred while retrieving images for the last added cars."
             )
             images = {car.id: [] for car in last_added_cars}
@@ -78,7 +80,7 @@ class Connector:
             db.commit()
             return new_path
         except Exception:
-            logging.exception(
+            logger.exception(
                 f"An error occurred while saving the image for {object_type} {object_id}."
             )
             return ""
@@ -100,7 +102,7 @@ class Connector:
             return True
 
         except Exception:
-            logging.exception(
+            logger.exception(
                 f"An error when trying to parse statement. File: {file_path}"
             )
             return False

@@ -12,6 +12,8 @@ from ui.builders import (
     TenantBuilder,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class UIRouter:
     def __init__(self, page: ft.Page):
@@ -33,7 +35,7 @@ class UIRouter:
                 view = home_builder.build_home_view()
 
         except Exception as ex:
-            logging.exception("An error occurred while initializing.")
+            logger.exception("An error occurred while initializing.")
 
             view = self._build_error_view(str(ex), "/")
         self.page.views.clear()
@@ -91,7 +93,7 @@ class UIRouter:
                         home_builder = HomeBuilder(self.page)
                         view = home_builder.build_home_view()
         except Exception as ex:
-            logging.exception(f"An error occurred while changing route to {e.route}.")
+            logger.exception(f"An error occurred while changing route to {e.route}.")
             view = self._build_error_view(str(ex), e.route)
 
         # Only after we have the view, we try to update the page. This way we avoid clearing the page if view creation fails.
@@ -101,7 +103,7 @@ class UIRouter:
             self.page.views.append(view)
             self.page.update()
         except Exception as ex:
-            logging.exception(f"An error occurred while updating the page: {ex}")
+            logger.exception(f"An error occurred while updating the page: {ex}")
 
     def _build_error_view(self, ex_str: str, route: str) -> ft.View:
         error_content = ft.Container(
