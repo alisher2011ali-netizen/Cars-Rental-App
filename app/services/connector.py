@@ -1,13 +1,12 @@
-from typing import Tuple, List, Dict
 import base64
-import uuid
 import logging
-from sqlalchemy.orm import Session
-from sqlalchemy import select
+import uuid
 
-from core.models import session_factory, Car, Image, Payment, PaymentType
-from services.file_manager import FileManager
+from core.models import Car, Image, Payment, PaymentType, session_factory
 from parsing.parser import process_sber_pdf
+from services.file_manager import FileManager
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 class Connector:
@@ -16,7 +15,7 @@ class Connector:
 
     def get_last_added_cars(
         self, limit: int = 5, db: Session = session_factory()
-    ) -> Tuple[List[Car], Dict[int, List[str]]]:
+    ) -> tuple[list[Car], dict[int, list[str]]]:
         last_added_cars = db.scalars(
             select(Car).order_by(Car.id.desc()).limit(limit)
         ).all()
@@ -78,7 +77,7 @@ class Connector:
             db.add(new_image)
             db.commit()
             return new_path
-        except Exception as ex:
+        except Exception:
             logging.exception(
                 f"An error occurred while saving the image for {object_type} {object_id}."
             )
@@ -100,7 +99,7 @@ class Connector:
             db.commit()
             return True
 
-        except Exception as e:
+        except Exception:
             logging.exception(
                 f"An error when trying to parse statement. File: {file_path}"
             )

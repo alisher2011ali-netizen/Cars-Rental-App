@@ -1,4 +1,5 @@
-import os, shutil
+import os
+import shutil
 from pathlib import Path
 
 default_images_path = Path("data/images/")

@@ -1,5 +1,4 @@
 import flet as ft
-
 from services.localization import localization
 from ui.builders.base import Builder
 
@@ -90,7 +89,7 @@ class FirstLaunchBuilder(Builder):
                     ],
                     spacing=5,
                 ),
-                ft.ElevatedButton(
+                ft.Button(
                     ft.Text(localization.continue_text, size=20),
                     icon=ft.Icon(ft.Icons.ARROW_FORWARD, size=20),
                     align=ft.Alignment.CENTER,

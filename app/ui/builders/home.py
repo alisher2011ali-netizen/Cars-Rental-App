@@ -1,5 +1,4 @@
 import flet as ft
-
 from services.localization import localization
 from ui.builders.base import Builder
 

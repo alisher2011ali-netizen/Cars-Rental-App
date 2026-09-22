@@ -1,7 +1,5 @@
-import os
+from parsing import exceptions, extractors
 from parsing.extractor import Extractor
-from parsing import extractors
-from parsing import exceptions
 from parsing.extractors_generic import determine_extractor_auto
 
 

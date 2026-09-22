@@ -3,13 +3,12 @@
 Разные отдельностоящие функции, которые используются в других модулях
 """
 
+import re
 from decimal import Decimal
-
+from typing import *
 from typing import TypeVar
 
 import unidecode
-import re
-from typing import *
 
 from parsing import exceptions
 

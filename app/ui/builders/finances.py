@@ -1,10 +1,9 @@
 import flet as ft
+from core.models import Payment, PaymentType, session_factory
+from services.localization import localization
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
 from ui.builders.base import Builder
-from core.models import session_factory, Payment, PaymentType
-from services.localization import localization
 
 
 class FinanceBuilder(Builder):
@@ -89,7 +88,7 @@ class FinanceBuilder(Builder):
 
             # 1. Избавляемся от двойных минусов с помощью abs()
             # 2. Форматируем до 2 знаков после запятой и отрезаем пустые нули на конце
-            formatted_amount = f"{abs(payment.amount):.2f}".rstrip('0').rstrip('.')
+            formatted_amount = f"{abs(payment.amount):.2f}".rstrip("0").rstrip(".")
 
             if not payment.is_parsed:
                 payment_card = ft.Container(
@@ -119,7 +118,7 @@ class FinanceBuilder(Builder):
                             ft.Text(
                                 f"{localization.comment}:\n{payment.comment}",
                                 size=14,
-                                color=ft.Colors.ON_SURFACE_VARIANT, # Теперь текст не сольется с фоном
+                                color=ft.Colors.ON_SURFACE_VARIANT,  # Теперь текст не сольется с фоном
                             ),
                         ],
                         spacing=5,
@@ -146,7 +145,7 @@ class FinanceBuilder(Builder):
                                     ft.Row(
                                         [
                                             ft.Text(
-                                                f"{payment_type}{formatted_amount}", # Используем отформатированную сумму
+                                                f"{payment_type}{formatted_amount}",  # Используем отформатированную сумму
                                                 size=16,
                                                 weight=ft.FontWeight.BOLD,
                                                 color=text_color,
@@ -194,7 +193,7 @@ class FinanceBuilder(Builder):
                                     ft.Text(
                                         op_date_str,
                                         size=12,
-                                        color=ft.Colors.ON_SURFACE_VARIANT
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
                                     ),
                                 ],
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -273,7 +272,7 @@ class FinanceBuilder(Builder):
             padding=8,
             visible=False,
         )
-        save_button = ft.ElevatedButton(
+        save_button = ft.Button(
             localization.save,
             icon=ft.Icons.SAVE,
             on_click=save_payment,

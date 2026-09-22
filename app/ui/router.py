@@ -1,16 +1,16 @@
-import flet as ft
 import logging
 
+import flet as ft
+from services.localization import localization
 from ui.builders import (
     Builder,
-    HomeBuilder,
     CarBuilder,
-    TenantBuilder,
-    RentalBuilder,
     FinanceBuilder,
     FirstLaunchBuilder,
+    HomeBuilder,
+    RentalBuilder,
+    TenantBuilder,
 )
-from services.localization import localization
 
 
 class UIRouter:
@@ -44,42 +44,52 @@ class UIRouter:
         """Handler for route change events. Updates the page view based on the new route.
         :params
         e: RouteChangeEvent"""
+        troute = ft.TemplateRoute(e.route)
 
         try:
-            match e.route:
-                case "/":
-                    home_builder = HomeBuilder(self.page)
-                    view = home_builder.build_home_view()
-                case "/first_launch":
-                    first_launch_builder = FirstLaunchBuilder(self.page)
-                    view = first_launch_builder.build_first_launch_view()
-                case "/cars":
-                    car_builder = CarBuilder(self.page)
-                    view = car_builder.build_cars_view()
-                case "/tenants":
-                    tenant_builder = TenantBuilder(self.page)
-                    view = tenant_builder.build_tenants_view()
-                case "/rentals":
-                    rental_builder = RentalBuilder(self.page)
-                    view = rental_builder.build_rentals_view()
-                case "/finances":
-                    finance_builder = FinanceBuilder(self.page)
-                    view = finance_builder.build_finances_view()
-                case "/add_car":
-                    car_builder = CarBuilder(self.page)
-                    view = car_builder.build_add_car_view()
-                case "/add_tenant":
-                    tenant_builder = TenantBuilder(self.page)
-                    view = tenant_builder.build_add_tenant_view()
-                case "/add_rental":
-                    rental_builder = RentalBuilder(self.page)
-                    view = rental_builder.build_add_rental_view()
-                case "/add_payment":
-                    finance_builder = FinanceBuilder(self.page)
-                    view = finance_builder.build_add_payment_view()
-                case _:
-                    home_builder = HomeBuilder(self.page)
-                    view = home_builder.build_home_view()
+            if troute.match("/cars/:id(\\d+)"):
+                car_builder = CarBuilder(self.page)
+                view = car_builder.build_car_details_view(int(troute.id))
+
+            elif troute.match("/tenants/:id(\\d+)"):
+                tenant_builder = TenantBuilder(self.page)
+                view = tenant_builder.build_tenant_details_view(int(troute.id))
+
+            else:
+                match e.route:
+                    case "/":
+                        home_builder = HomeBuilder(self.page)
+                        view = home_builder.build_home_view()
+                    case "/first_launch":
+                        first_launch_builder = FirstLaunchBuilder(self.page)
+                        view = first_launch_builder.build_first_launch_view()
+                    case "/cars":
+                        car_builder = CarBuilder(self.page)
+                        view = car_builder.build_cars_view()
+                    case "/tenants":
+                        tenant_builder = TenantBuilder(self.page)
+                        view = tenant_builder.build_tenants_view()
+                    case "/rentals":
+                        rental_builder = RentalBuilder(self.page)
+                        view = rental_builder.build_rentals_view()
+                    case "/finances":
+                        finance_builder = FinanceBuilder(self.page)
+                        view = finance_builder.build_finances_view()
+                    case "/add_car":
+                        car_builder = CarBuilder(self.page)
+                        view = car_builder.build_add_car_view()
+                    case "/add_tenant":
+                        tenant_builder = TenantBuilder(self.page)
+                        view = tenant_builder.build_add_tenant_view()
+                    case "/add_rental":
+                        rental_builder = RentalBuilder(self.page)
+                        view = rental_builder.build_add_rental_view()
+                    case "/add_payment":
+                        finance_builder = FinanceBuilder(self.page)
+                        view = finance_builder.build_add_payment_view()
+                    case _:
+                        home_builder = HomeBuilder(self.page)
+                        view = home_builder.build_home_view()
         except Exception as ex:
             logging.exception(f"An error occurred while changing route to {e.route}.")
             view = self._build_error_view(str(ex), e.route)

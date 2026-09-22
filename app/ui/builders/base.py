@@ -1,5 +1,4 @@
 import flet as ft
-
 from core.models import Car
 from services.connector import Connector
 from services.localization import localization
@@ -56,104 +55,110 @@ class Builder:
         car_images = car_images or []
         self.current_image_indices[car.id] = 0
 
+        def go_to_details(e):
+            self.page.push_route(f"/cars/{car.id}")
+
         if car_images:
-            image_container = ft.Container(
-                content=ft.Image(src=car_images[0]),
-                width=300,
-                height=200,
-            )
-
-            def on_horizontal_drag_update(e: ft.DragUpdateEvent):
-                if e.primary_delta > 50:
-                    self._prev_image(car.id, car_images, image_container)
-                elif e.primary_delta < -50:
-                    self._next_image(car.id, car_images, image_container)
-
-            image_with_swipe = ft.GestureDetector(
-                content=image_container,
-                on_horizontal_drag_update=on_horizontal_drag_update,
-            )
             indicator = ft.Text(
                 f"1/{len(car_images)}",
                 size=12,
                 weight="bold",
-                color=ft.Colors.BLUE_700,
+                color=ft.Colors.ON_SURFACE_VARIANT,
             )
+
+            image_container = ft.Container(
+                content=ft.Image(src=car_images[0]),
+                width=300,
+                height=200,
+                border_radius=8
+            )
+
+            def on_horizontal_drag_update(e: ft.DragUpdateEvent):
+                if e.primary_delta > 50:
+                    self._prev_image(car.id, car_images, image_container, indicator)
+                elif e.primary_delta < -50:
+                    self._next_image(car.id, car_images, image_container, indicator)
+
+            image_with_swipe = ft.GestureDetector(
+                content=image_container,
+                on_horizontal_drag_update=on_horizontal_drag_update,
+                on_tap=go_to_details
+            )
+
         else:
             image_container = ft.Container(
                 content=ft.Text(
                     localization.no_images,
                     size=14,
                     weight="bold",
-                    color=ft.Colors.GREY_700,
+                    color=ft.Colors.ON_SURFACE_VARIANT,
                 ),
-                bgcolor=ft.Colors.GREY_200,
+                width=300,
+                height=200,
+                bgcolor=ft.Colors.SURFACE_CONTAINER,
+                alignment=ft.Alignment.CENTER,
+                border_radius=8,
             )
-            image_with_swipe = image_container
-            indicator = ft.Text(
-                localization.no_images,
-                size=12,
-                weight="bold",
-                color=ft.Colors.GREY_700,
+            image_with_swipe = ft.GestureDetector(
+                content=image_container,
+                on_tap=go_to_details,
             )
+            indicator = ft.Text()
 
         card = ft.Container(
             content=ft.Column(
                 [
                     ft.Text(
                         f"{car.brand} {car.model} ({car.plate_number})",
-                        size=14,
+                        size=16,
                         weight="bold",
+                        color=ft.Colors.ON_SURFACE_VARIANT
                     ),
                     image_with_swipe,
                     indicator,
                 ],
                 alignment=ft.Alignment.CENTER,
-                horizontal_alignment=ft.Alignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=10,
             ),
             padding=15,
             border_radius=12,
-            bgcolor=ft.Colors.GREY_100,
+            bgcolor=ft.Colors.SURFACE_CONTAINER,
+            on_click=go_to_details
         )
-
-        card.image_container = image_container
-        card.indicator = indicator
-        card.car_images = car_images
 
         return card
 
     def _next_image(
-        self, car_id: int, images: list[str], image_container: ft.Container
+        self, car_id: int, images: list[str], image_container: ft.Container, indicator: ft.Text
     ):
         if not images:
             return
-        if car_id not in self.current_image_indices:
-            self.current_image_indices[car_id] = 0
 
-        current = self.current_image_indices[car_id]
+        current = self.current_image_indices.get(car_id, 0)
+
         if current < len(images) - 1:
-            self.current_image_indices[car_id] += 1
-            image_container.content = ft.Image(
-                src_base64=images[self.current_image_indices[car_id]]
-            )
+            self.current_image_indices[car_id] = current + 1
+            image_container.content.src = images[current + 1]
             image_container.update()
+
+            indicator.value = f"{current + 2}/{len(images)}"
+            indicator.update()
 
     def _prev_image(
-        self, car_id: int, images: list[str], image_container: ft.Container
+        self, car_id: int, images: list[str], image_container: ft.Container, indicator: ft.Text
     ):
         if not images:
             return
-        if car_id not in self.current_image_indices:
-            self.current_image_indices[car_id] = 0
 
-        current = self.current_image_indices[car_id]
+        current = self.current_image_indices.get(car_id, 0)
         if current > 0:
-            self.current_image_indices[car_id] -= 1
-            image_container.content = ft.Image(
-                src_base64=images[self.current_image_indices[car_id]]
-            )
+            self.current_image_indices[car_id] = current - 1
+            image_container.content.src = images[current - 1]
             image_container.update()
+
+            indicator.value = f"{current}/{len(images)}"
+            indicator.update()
 
     def _build_complete_snack_bar(self) -> ft.SnackBar:
         return ft.SnackBar(

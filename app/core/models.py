@@ -1,14 +1,17 @@
+import enum
+import os
 from datetime import datetime
-from pathlib import Path
+from decimal import Decimal
+
 from sqlalchemy import (
-    create_engine,
-    ForeignKey,
-    String,
-    Integer,
-    Boolean,
     DECIMAL,
+    Boolean,
     DateTime,
     Enum,
+    ForeignKey,
+    Integer,
+    String,
+    create_engine,
     func,
 )
 from sqlalchemy.orm import (
@@ -18,9 +21,6 @@ from sqlalchemy.orm import (
     relationship,
     sessionmaker,
 )
-import enum
-from decimal import Decimal
-import os
 
 data_path = os.getenv("FLET_APP_STORAGE_DATA")
 if not data_path:

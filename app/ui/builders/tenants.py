@@ -1,10 +1,10 @@
-import flet as ft
-from sqlalchemy.orm import Session
-from sqlalchemy import select
 import logging
 
-from core.models import session_factory, Tenant
+import flet as ft
+from core.models import Tenant, session_factory
 from services.localization import localization
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 
 
@@ -98,8 +98,10 @@ class TenantBuilder(Builder):
                                             ),
                                             ft.TextButton(
                                                 ft.Text(localization.details, size=16),
-                                                on_click=lambda e, t_id: self.page.push_route(
-                                                    f"/tenants/{t_id}"
+                                                on_click=lambda e, t_id: (
+                                                    self.page.push_route(
+                                                        f"/tenants/{t_id}"
+                                                    )
                                                 ),
                                             ),
                                         ],
@@ -131,7 +133,7 @@ class TenantBuilder(Builder):
             "avatar": None,
             "passport": None,
             "sub_passport": None,
-            "drive_license": None
+            "drive_license": None,
         }
 
         avatar_picker = ft.FilePicker()
@@ -142,18 +144,24 @@ class TenantBuilder(Builder):
         def make_picker_callback(picker: ft.FilePicker, path_key: str):
             async def callback(e):
                 files = await picker.pick_files(
-                    allow_multiple=False,
-                    file_type=ft.FilePickerFileType.IMAGE
+                    allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
                 )
                 if files:
                     paths[path_key] = files[0].path
-                    logging.info(f"Файл для {path_key} успешно сохранен: {paths[path_key]}")
+                    logging.info(
+                        f"Файл для {path_key} успешно сохранен: {paths[path_key]}"
+                    )
+
             return callback
 
         pick_avatar_click = make_picker_callback(avatar_picker, "avatar")
         pick_passport_click = make_picker_callback(passport_picker, "passport")
-        pick_sub_passport_click = make_picker_callback(sub_passport_picker, "sub_passport")
-        pick_drive_license_click = make_picker_callback(drive_license_picker, "drive_license")
+        pick_sub_passport_click = make_picker_callback(
+            sub_passport_picker, "sub_passport"
+        )
+        pick_drive_license_click = make_picker_callback(
+            drive_license_picker, "drive_license"
+        )
 
         async def save_tenant(e=None):
             new_tenant = Tenant(
@@ -174,7 +182,7 @@ class TenantBuilder(Builder):
                         object_id=new_tenant.id,
                         object_type="tenant",
                         category=img_category,
-                        db=db
+                        db=db,
                     )
 
             self._build_complete_snack_bar()
@@ -215,12 +223,12 @@ class TenantBuilder(Builder):
                         on_click=pick_drive_license_click,
                         margin=5,
                     ),
-                    ft.ElevatedButton(
+                    ft.Button(
                         localization.save,
                         icon=ft.Icons.SAVE,
                         on_click=save_tenant,
                     ),
-                    ft.ElevatedButton(
+                    ft.Button(
                         localization.back,
                         icon=ft.Icons.ARROW_BACK,
                         on_click=lambda e: self.page.push_route("/tenants"),

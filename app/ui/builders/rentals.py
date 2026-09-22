@@ -2,7 +2,6 @@ import flet as ft
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-
 from core.models import session_factory, Car, Rental, Tenant
 from services.localization import localization
 from ui.builders.base import Builder
@@ -203,12 +202,12 @@ class RentalBuilder(Builder):
 
         manual_date_row = ft.Row(
             [
-                ft.ElevatedButton(
+                ft.Button(
                     localization.start,
                     icon=ft.Icons.CALENDAR_MONTH,
                     on_click=lambda e: self.page.show_dialog(start_picker),
                 ),
-                ft.ElevatedButton(
+                ft.Button(
                     localization.end,
                     icon=ft.Icons.CALENDAR_MONTH,
                     on_click=lambda e: self.page.show_dialog(end_picker),
@@ -302,7 +301,7 @@ class RentalBuilder(Builder):
         def on_click_save(e):
             pass
 
-        save_button = ft.ElevatedButton(
+        save_button = ft.Button(
             localization.save, icon=ft.Icons.SAVE, on_click=on_click_save
         )
 

@@ -1,10 +1,9 @@
-import flet as ft
 import logging
 import os
-import asyncio
 
-from core.models import init_db
+import flet as ft
 from core.logging import setup_logging
+from core.models import init_db
 from ui.router import UIRouter
 
 
