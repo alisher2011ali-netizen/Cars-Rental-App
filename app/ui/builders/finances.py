@@ -223,7 +223,7 @@ class FinanceBuilder(Builder):
         if db is None:
             db = session_factory()
 
-        def save_payment(e):
+        async def save_payment(e):
             if not amount_input.value.isdigit():
                 amount_input.value = ""
                 error_text.value = f"{localization.amount_only_can_be_digit}!"
@@ -245,7 +245,7 @@ class FinanceBuilder(Builder):
             db.commit()
 
             self.page.overlay.append(self._build_complete_snack_bar())
-            self.page.push_route("/finances")
+            await self.page.push_route("/finances")
 
         amount_input = ft.TextField(label=localization.amount, width=300)
         comment_input = ft.TextField(label=localization.comment, width=300)

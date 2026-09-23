@@ -35,28 +35,28 @@ class Builder:
                 ),
             ],
             selected_index=current_index,
-            on_change=lambda e: self._handle_nav_change(e.control.selected_index),
+            on_change=self._handle_nav_change,
         )
 
-    def _handle_nav_change(self, index: int):
-        match index:
+    async def _handle_nav_change(self, e):
+        match e.control.selected_index:
             case 0:
-                self.page.push_route("/")
+                await self.page.push_route("/")
             case 1:
-                self.page.push_route("/cars")
+                await self.page.push_route("/cars")
             case 2:
-                self.page.push_route("/tenants")
+                await self.page.push_route("/tenants")
             case 3:
-                self.page.push_route("/rentals")
+                await self.page.push_route("/rentals")
             case 4:
-                self.page.push_route("/finances")
+                await self.page.push_route("/finances")
 
     def _create_car_card(self, car: Car, car_images: list[str] | None = None):
         car_images = car_images or []
         self.current_image_indices[car.id] = 0
 
-        def go_to_details(e):
-            self.page.push_route(f"/cars/{car.id}")
+        async def go_to_details(e):
+            await self.page.push_route(f"/cars/{car.id}")
 
         if car_images:
             indicator = ft.Text(
@@ -70,7 +70,7 @@ class Builder:
                 content=ft.Image(src=car_images[0]),
                 width=300,
                 height=200,
-                border_radius=8
+                border_radius=8,
             )
 
             def on_horizontal_drag_update(e: ft.DragUpdateEvent):
@@ -82,7 +82,7 @@ class Builder:
             image_with_swipe = ft.GestureDetector(
                 content=image_container,
                 on_horizontal_drag_update=on_horizontal_drag_update,
-                on_tap=go_to_details
+                on_tap=go_to_details,
             )
 
         else:
@@ -112,7 +112,7 @@ class Builder:
                         f"{car.brand} {car.model} ({car.plate_number})",
                         size=16,
                         weight="bold",
-                        color=ft.Colors.ON_SURFACE_VARIANT
+                        color=ft.Colors.ON_SURFACE_VARIANT,
                     ),
                     image_with_swipe,
                     indicator,
@@ -124,13 +124,17 @@ class Builder:
             padding=15,
             border_radius=12,
             bgcolor=ft.Colors.SURFACE_CONTAINER,
-            on_click=go_to_details
+            on_click=go_to_details,
         )
 
         return card
 
     def _next_image(
-        self, car_id: int, images: list[str], image_container: ft.Container, indicator: ft.Text
+        self,
+        car_id: int,
+        images: list[str],
+        image_container: ft.Container,
+        indicator: ft.Text,
     ):
         if not images:
             return
@@ -146,7 +150,11 @@ class Builder:
             indicator.update()
 
     def _prev_image(
-        self, car_id: int, images: list[str], image_container: ft.Container, indicator: ft.Text
+        self,
+        car_id: int,
+        images: list[str],
+        image_container: ft.Container,
+        indicator: ft.Text,
     ):
         if not images:
             return
@@ -185,7 +193,9 @@ class Builder:
                     ft.TextButton(
                         button_text,
                         icon=ft.Icons.ADD,
-                        on_click=lambda _: self.page.push_route(route),
+                        on_click=lambda _: self.page.run_task(
+                            self.page.push_route, route
+                        ),
                         align=ft.Alignment.CENTER,
                     ),
                 ],
@@ -197,7 +207,7 @@ class Builder:
     def _build_fab(self, route: str, text: str) -> ft.FloatingActionButton:
         return ft.FloatingActionButton(
             icon=ft.Icons.ADD,
-            on_click=lambda e: self.page.push_route(route),
+            on_click=lambda _: self.page.run_task(self.page.push_route, route),
             tooltip=ft.Tooltip(text),
         )
 

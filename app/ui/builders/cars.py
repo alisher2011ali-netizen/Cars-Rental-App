@@ -116,7 +116,7 @@ class CarBuilder(Builder):
                 )
 
             self._build_complete_snack_bar()
-            self.page.push_route("/cars")
+            await self.page.push_route("/cars")
 
         brand_input = ft.TextField(label=localization.brand, width=300)
         model_input = ft.TextField(label=localization.model, width=300)
@@ -143,7 +143,9 @@ class CarBuilder(Builder):
                     ft.Button(
                         localization.back,
                         icon=ft.Icons.ARROW_BACK,
-                        on_click=lambda e: self.page.push_route("/cars"),
+                        on_click=lambda e: self.page.run_task(
+                            self.page.push_route, "/cars"
+                        ),
                     ),
                 ],
                 spacing=15,
@@ -157,3 +159,9 @@ class CarBuilder(Builder):
             navigation_bar=self._get_nav_bar(1),
             controls=[input],
         )
+
+    def build_car_details_view(self, car_id: int, db: Session | None = None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
+        # car = db.get(Car, car_id)

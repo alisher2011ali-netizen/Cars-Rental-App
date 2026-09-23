@@ -100,8 +100,9 @@ class TenantBuilder(Builder):
                                             ft.TextButton(
                                                 ft.Text(localization.details, size=16),
                                                 on_click=lambda e, t_id: (
-                                                    self.page.push_route(
-                                                        f"/tenants/{t_id}"
+                                                    self.page.run_task(
+                                                        self.page.push_route,
+                                                        f"/tenants/{t_id}",
                                                     )
                                                 ),
                                             ),
@@ -187,7 +188,7 @@ class TenantBuilder(Builder):
                     )
 
             self._build_complete_snack_bar()
-            self.page.push_route("/tenants")
+            await self.page.push_route("/tenants")
 
         name_input = ft.TextField(label=localization.fullname, width=300)
 
@@ -232,7 +233,9 @@ class TenantBuilder(Builder):
                     ft.Button(
                         localization.back,
                         icon=ft.Icons.ARROW_BACK,
-                        on_click=lambda e: self.page.push_route("/tenants"),
+                        on_click=lambda e: self.page.run_task(
+                            self.page.push_route, "/tenants"
+                        ),
                     ),
                 ],
                 spacing=15,

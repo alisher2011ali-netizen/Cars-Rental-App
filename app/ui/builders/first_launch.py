@@ -106,4 +106,4 @@ class FirstLaunchBuilder(Builder):
 
     async def _on_continue(self, e):
         await self.prefs.set("is_first_launch", False)
-        self.page.push_route("/cars")
+        await self.page.push_route("/cars")
