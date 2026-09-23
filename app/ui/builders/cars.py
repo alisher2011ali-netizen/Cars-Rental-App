@@ -164,4 +164,203 @@ class CarBuilder(Builder):
         if db is None:
             db = session_factory()
 
-        # car = db.get(Car, car_id)
+        car = db.get(Car, car_id)
+        if not car:
+            return ft.View(
+                route=f"/cars/{car_id}",
+                controls=[
+                    ft.AppBar(title=ft.Text("Ошибка")),
+                    ft.Text("Автомобиль не найден", color=ft.colors.ERROR),
+                ],
+            )
+
+        # Загрузка изображений (предполагается, что возвращаются base64 строки или пути)
+        # TODO: Заменить на актуальный вызов метода из Connector
+        car_images = []
+        current_index = [0]
+
+        # --- Компоненты полноэкранной галереи ---
+        gallery_img = ft.Image(fit=ft.BoxFit.CONTAIN, expand=True)
+        gallery_counter = ft.Text(size=16, color=ft.Colors.WHITE, weight="bold")
+
+        def update_gallery():
+            if car_images:
+                gallery_img.src_base64 = car_images[current_index[0]]
+                gallery_counter.value = f"{current_index[0] + 1} / {len(car_images)}"
+                gallery_img.update()
+                gallery_counter.update()
+
+        def close_gallery(e):
+            gallery_overlay.visible = False
+            self.page.update()
+
+        def next_img(e):
+            if current_index[0] < len(car_images) - 1:
+                current_index[0] += 1
+                update_gallery()
+
+        def prev_img(e):
+            if current_index[0] > 0:
+                current_index[0] -= 1
+                update_gallery()
+
+        def delete_img(e):
+            # TODO: Логика удаления из БД (self.connector.delete_image)
+            close_gallery(e)
+
+        # Оверлей галереи
+        gallery_overlay = ft.Container(
+            content=ft.Stack(
+                [
+                    ft.Container(
+                        content=gallery_img,
+                        alignment=ft.Alignment.CENTER,
+                        on_click=close_gallery,
+                        expand=True,
+                    ),
+                    # Кнопка удаления (полупрозрачная красная)
+                    ft.Container(
+                        content=ft.IconButton(
+                            ft.Icons.DELETE,
+                            icon_color=ft.Colors.WHITE,
+                            on_click=delete_img,
+                        ),
+                        bgcolor=ft.Colors.with_opacity(0.6, ft.Colors.RED),
+                        border_radius=8,
+                        top=20,
+                        right=20,
+                    ),
+                    # Кнопка закрытия
+                    ft.Container(
+                        content=ft.IconButton(
+                            ft.Icons.CLOSE,
+                            icon_color=ft.Colors.WHITE,
+                            on_click=close_gallery,
+                        ),
+                        top=20,
+                        left=20,
+                    ),
+                    # Навигация
+                    ft.Row(
+                        [
+                            ft.IconButton(
+                                ft.Icons.ARROW_BACK_IOS,
+                                icon_color=ft.Colors.WHITE,
+                                on_click=prev_img,
+                            ),
+                            gallery_counter,
+                            ft.IconButton(
+                                ft.Icons.ARROW_FORWARD_IOS,
+                                icon_color=ft.Colors.WHITE,
+                                on_click=next_img,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        bottom=40,
+                        left=20,
+                        right=20,
+                    ),
+                ],
+                expand=True,
+            ),
+            bgcolor=ft.Colors.with_opacity(0.95, ft.Colors.BLACK),
+            visible=False,
+            expand=True,
+            left=0,
+            top=0,
+            right=0,
+            bottom=0,
+        )
+
+        if gallery_overlay not in self.page.overlay:
+            self.page.overlay.append(gallery_overlay)
+
+        def open_gallery(e, index):
+            if not car_images:
+                return
+            current_index[0] = index
+            update_gallery()
+            gallery_overlay.visible = True
+            self.page.update()
+
+        # --- Блок фотографий на странице ---
+        images_row = ft.Row(scroll=ft.ScrollMode.AUTO, spacing=10)
+        if car_images:
+            for i, img in enumerate(car_images):
+                images_row.controls.append(
+                    ft.GestureDetector(
+                        content=ft.Image(
+                            src_base64=img,
+                            width=120,
+                            height=120,
+                            fit=ft.BoxFit.COVER,
+                            border_radius=8,
+                        ),
+                        on_tap=lambda e, idx=i: open_gallery(e, idx),
+                    )
+                )
+        else:
+            images_row.controls.append(
+                ft.Text("Нет фото", color=ft.Colors.ON_SURFACE_VARIANT)
+            )
+
+        add_photo_btn = ft.Button(
+            "Добавить фото",
+            icon=ft.Icons.ADD,
+            # on_click=lambda e: ... (вызов FilePicker)
+        )
+
+        # --- Информационный блок ---
+        car_info = ft.Column(
+            [
+                ft.Text(f"{car.brand} {car.model}", size=24, weight="bold"),
+                ft.Text(f"Год выпуска: {car.year}", size=16),
+                ft.Text(f"Гос. номер: {car.plate_number}", size=16),
+                ft.Text(f"Статус: {getattr(car, 'status', 'Не указан')}", size=16),
+                ft.Text(f"Заметки: {getattr(car, 'notes', 'Отсутствуют')}", size=16),
+            ],
+            spacing=5,
+        )
+
+        # --- Ссылка на активную аренду ---
+        active_rental_btn = ft.Container()
+        if hasattr(car, "rentals") and car.rentals:
+            active_rental = car.rentals[-1]
+            active_rental_btn = ft.Button(
+                f"Текущая аренда #{active_rental.id}",
+                icon=ft.Icons.KEY,
+                on_click=lambda e: self.page.run_task(
+                    self.page.push_route, f"/rentals/{active_rental.id}"
+                ),
+                icon_color=ft.Colors.PRIMARY,
+            )
+
+        return ft.View(
+            route=f"/cars/{car_id}",
+            controls=[
+                ft.AppBar(
+                    title=ft.Text(f"Детали авто #{car_id}"),
+                    leading=ft.IconButton(
+                        ft.Icons.ARROW_BACK,
+                        on_click=lambda e: self.page.run_task(
+                            self.page.push_route, "/cars"
+                        ),
+                    ),
+                ),
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            images_row,
+                            add_photo_btn,
+                            ft.Divider(height=30),
+                            car_info,
+                            ft.Container(height=10),
+                            active_rental_btn,
+                        ],
+                        scroll=ft.ScrollMode.AUTO,
+                    ),
+                    padding=20,
+                    expand=True,
+                ),
+            ],
+        )

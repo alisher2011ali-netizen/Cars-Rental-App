@@ -36,11 +36,29 @@ class Base(DeclarativeBase):
 
 
 class ImageCategory(str, enum.Enum):
-    AVATAR = "avatar"
-    PASSPORT = "passport"
-    SUB_PASSPORT = "sub_passport"
-    DRIVE_LICENSE = "drive_license"
-    CAR_PHOTO = "car_photo"
+    avatar = "avatar"
+    passport = "passport"
+    sub_passport = "sub_passport"
+    drive_license = "drive_license"
+    car_photo = "car_photo"
+
+
+class ImageObjectType(str, enum.Enum):
+    car = "car"
+    tenant = "tenant"
+
+
+class CarStatus(str, enum.Enum):
+    available = "available"
+    rented = "rented"
+    maintance = "maintance"
+    other = "other"
+
+
+class RentalStatus(str, enum.Enum):
+    active = "active"
+    completed = "completed"
+    cancelled = "cancelled"
 
 
 class Image(Base):
@@ -49,8 +67,8 @@ class Image(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     path: Mapped[str] = mapped_column(String(300))
     object_id: Mapped[int] = mapped_column(Integer)
-    object_type: Mapped[str] = mapped_column(String(50))  # "car" or "tenant"
-    category: Mapped[str] = mapped_column(String(50), nullable=False)
+    object_type: Mapped[ImageObjectType] = mapped_column(Enum(ImageObjectType))
+    category: Mapped[ImageCategory] = mapped_column(Enum(ImageCategory), nullable=False)
 
 
 class Car(Base):
@@ -60,10 +78,10 @@ class Car(Base):
     brand: Mapped[str] = mapped_column(String(50))
     model: Mapped[str] = mapped_column(String(50))
     year: Mapped[int] = mapped_column(Integer)
-    plate_number: Mapped[str] = mapped_column(String(20), unique=True)
-    status: Mapped[str] = mapped_column(
-        String(20), default="available"
-    )  # available/rented/maintenance
+    plate_number: Mapped[str] = mapped_column(String(15), unique=True)
+    status: Mapped[CarStatus] = mapped_column(
+        Enum(CarStatus), default=CarStatus.available
+    )
     notes: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -88,35 +106,35 @@ class Tenant(Base):
     phone_number: Mapped[str] = mapped_column(String(20))
     debt_sum: Mapped[Decimal] = mapped_column(
         DECIMAL, default=Decimal(0)
-    )  # Total amount owed by tenant in rubles
+    )  # Total amount owed by tenant
     next_payment_due: Mapped[datetime | None] = mapped_column(
         DateTime, nullable=True
     )  # Next payment due date
 
     avatar: Mapped["Image"] = relationship(
         "Image",
-        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.AVATAR}')",
+        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.avatar}')",
         foreign_keys=[Image.object_id],
-        uselist=False,  # Возвращает один объект Image, а не list
+        uselist=False,
         viewonly=True,
     )
     passport: Mapped["Image"] = relationship(
         "Image",
-        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.PASSPORT}')",
+        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.passport}')",
         foreign_keys=[Image.object_id],
         uselist=False,
         viewonly=True,
     )
     sub_passport: Mapped["Image"] = relationship(
         "Image",
-        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.SUB_PASSPORT}')",
+        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.sub_passport}')",
         foreign_keys=[Image.object_id],
         uselist=False,
         viewonly=True,
     )
     drive_license: Mapped["Image"] = relationship(
         "Image",
-        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.DRIVE_LICENSE}')",
+        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.drive_license}')",
         foreign_keys=[Image.object_id],
         uselist=False,
         viewonly=True,
@@ -138,13 +156,15 @@ class Rental(Base):
 
     start_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    weekly_price: Mapped[Decimal] = mapped_column(DECIMAL)
+    period: Mapped[int] = mapped_column(Integer)  # In days
+    price_per_period: Mapped[Decimal] = mapped_column(DECIMAL)
     total_cost: Mapped[Decimal] = mapped_column(
-        DECIMAL, default=Decimal(0)
-    )  # weekly_price * number_of_weeks
-    status: Mapped[str] = mapped_column(
-        String(20), default="active"
-    )  # active/completed/cancelled
+        DECIMAL,
+        default=Decimal(0),
+    )
+    status: Mapped[RentalStatus] = mapped_column(
+        Enum(RentalStatus), default=RentalStatus.active
+    )
     notes: Mapped[str | None] = mapped_column(String(500))
 
     car: Mapped["Car"] = relationship(back_populates="rentals")
