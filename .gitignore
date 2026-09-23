@@ -3,6 +3,7 @@ logs/
 test_statement.pdf
 Cars-Rental-App.code-workspace
 *.diff
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

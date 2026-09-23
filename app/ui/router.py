@@ -102,8 +102,8 @@ class UIRouter:
             self.page.views.clear()
             self.page.views.append(view)
             self.page.update()
-        except Exception as ex:
-            logger.exception(f"An error occurred while updating the page: {ex}")
+        except Exception:
+            logger.exception("An error occurred while updating the page.")
 
     def _build_error_view(self, ex_str: str, route: str) -> ft.View:
         error_content = ft.Container(

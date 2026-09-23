@@ -9,7 +9,10 @@ from ui.builders.base import Builder
 
 
 class RentalBuilder(Builder):
-    def build_rentals_view(self, db: Session = session_factory()) -> ft.View:
+    def build_rentals_view(self, db: Session | None = None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
         rentals_list = db.scalars(select(Rental)).all()
         fab = self._build_fab("/add_rental", "Добавить аренду")
 
@@ -111,7 +114,10 @@ class RentalBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_rental_view(self, db: Session = session_factory()) -> ft.View:
+    def build_add_rental_view(self, db: Session | None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
         selected_car_id = None
         selected_tenant_id = None
 

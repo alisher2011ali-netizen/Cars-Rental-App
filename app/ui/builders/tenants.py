@@ -7,7 +7,10 @@ from ui.builders.base import Builder
 
 
 class TenantBuilder(Builder):
-    def build_tenants_view(self, db: Session = session_factory()) -> ft.View:
+    def build_tenants_view(self, db: Session | None = None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
         tenants_list = db.scalars(select(Tenant)).all()
         fab = self._build_fab("/add_tenant", localization.add_tenant)
 
@@ -90,8 +93,8 @@ class TenantBuilder(Builder):
                                             ft.Text(
                                                 tenant.phone_number,
                                                 size=20,
-                                                on_tap=lambda e: on_phone_number_tap(
-                                                    tenant.phone_number
+                                                on_tap=lambda e, phone_number=tenant.phone_number: (
+                                                    on_phone_number_tap(phone_number)
                                                 ),
                                             ),
                                             ft.TextButton(
@@ -126,7 +129,10 @@ class TenantBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_tenant_view(self, db: Session = session_factory()) -> ft.View:
+    def build_add_tenant_view(self, db: Session | None = None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
         paths = {
             "avatar": None,
             "passport": None,

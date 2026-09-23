@@ -7,7 +7,10 @@ from ui.builders.base import Builder
 
 
 class FinanceBuilder(Builder):
-    def build_finances_view(self, db: Session = session_factory()) -> ft.View:
+    def build_finances_view(self, db: Session | None = None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
         payments_list = db.scalars(select(Payment)).all()
         title = ft.Text(
             f"💰 {localization.finances}",
@@ -216,7 +219,10 @@ class FinanceBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_payment_view(self, db: Session = session_factory()) -> ft.View:
+    def build_add_payment_view(self, db: Session | None = None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
         def save_payment(e):
             if not amount_input.value.isdigit():
                 amount_input.value = ""

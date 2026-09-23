@@ -16,8 +16,11 @@ class Connector:
         self.file_manager = FileManager()
 
     def get_last_added_cars(
-        self, limit: int = 5, db: Session = session_factory()
+        self, limit: int = 5, db: Session | None = None
     ) -> tuple[list[Car], dict[int, list[str]]]:
+        if db is None:
+            db = session_factory()
+
         last_added_cars = db.scalars(
             select(Car).order_by(Car.id.desc()).limit(limit)
         ).all()
@@ -37,7 +40,7 @@ class Connector:
                         images[car.id].append(
                             base64.b64encode(image_bytes).decode("utf-8")
                         )
-        except Exception as ex:
+        except Exception:
             logger.exception(
                 "An error occurred while retrieving images for the last added cars."
             )
@@ -52,8 +55,11 @@ class Connector:
         object_id: int,
         object_type: str,
         category: str = "car_photo",
-        db: Session = session_factory(),
+        db: Session | None = None,
     ) -> str:
+        if db is None:
+            db = session_factory()
+
         try:
             unique_number = uuid.uuid4().hex[:8]
             if object_type == "car":
@@ -85,7 +91,10 @@ class Connector:
             )
             return ""
 
-    def save_statement(self, file_path: str, db: Session = session_factory()) -> bool:
+    def save_statement(self, file_path: str, db: Session | None = None) -> bool:
+        if db is None:
+            db = session_factory()
+
         try:
             data = process_sber_pdf(file_path)
             for payment in data:

@@ -7,7 +7,10 @@ from ui.builders.base import Builder
 
 
 class CarBuilder(Builder):
-    def build_cars_view(self, db: Session = session_factory()) -> ft.View:
+    def build_cars_view(self, db: Session | None = None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
         cars_list = db.scalars(select(Car)).all()
         fab = self._build_fab("/add_car", localization.add_car)
 
@@ -81,7 +84,10 @@ class CarBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_car_view(self, db: Session = session_factory()) -> ft.View:
+    def build_add_car_view(self, db: Session | None = None) -> ft.View:
+        if db is None:
+            db = session_factory()
+
         selected_images_paths = []
 
         file_picker = ft.FilePicker()
@@ -129,12 +135,12 @@ class CarBuilder(Builder):
                         icon=ft.Icons.UPLOAD_FILE,
                         on_click=pick_image_click,
                     ),
-                    ft.ElevatedButton(
+                    ft.Button(
                         localization.save,
                         icon=ft.Icons.SAVE,
                         on_click=save_car,
                     ),
-                    ft.ElevatedButton(
+                    ft.Button(
                         localization.back,
                         icon=ft.Icons.ARROW_BACK,
                         on_click=lambda e: self.page.push_route("/cars"),
