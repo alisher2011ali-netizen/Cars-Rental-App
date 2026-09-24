@@ -60,7 +60,7 @@ class RentalBuilder(Builder):
         )
 
         for rental in rentals_list:
-            match rental.status:
+            match rental.status.value:
                 case "active":
                     status_text = localization.active
                     status_color = ft.Colors.GREEN_500
@@ -70,6 +70,9 @@ class RentalBuilder(Builder):
                 case "cancelled":
                     status_text = localization.cancelled
                     status_color = ft.Colors.RED_500
+                case _:
+                    status_text = localization.other
+                    status_color = ft.Colors.GREY_500
 
             rental_card = ft.Container(
                 content=ft.Column(

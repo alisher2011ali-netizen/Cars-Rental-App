@@ -170,7 +170,13 @@ class CarBuilder(Builder):
                 route=f"/cars/{car_id}",
                 controls=[
                     ft.AppBar(title=ft.Text("Ошибка")),
-                    ft.Text("Автомобиль не найден", color=ft.colors.ERROR),
+                    ft.Text("Автомобиль не найден", color=ft.Сolors.ERROR),
+                    ft.Button(
+                        "Назад",
+                        icon=ft.Icons.ARROW_BACK,
+                        on_click=self.page.run_task(self.page.push_route, "/"),
+                        align=ft.Alignment.CENTER,
+                    ),
                 ],
             )
 
@@ -180,7 +186,7 @@ class CarBuilder(Builder):
         current_index = [0]
 
         # --- Компоненты полноэкранной галереи ---
-        gallery_img = ft.Image(fit=ft.BoxFit.CONTAIN, expand=True)
+        gallery_img = ft.Image(src="", fit=ft.BoxFit.CONTAIN, expand=True)
         gallery_counter = ft.Text(size=16, color=ft.Colors.WHITE, weight="bold")
 
         def update_gallery():
@@ -316,8 +322,8 @@ class CarBuilder(Builder):
                 ft.Text(f"{car.brand} {car.model}", size=24, weight="bold"),
                 ft.Text(f"Год выпуска: {car.year}", size=16),
                 ft.Text(f"Гос. номер: {car.plate_number}", size=16),
-                ft.Text(f"Статус: {getattr(car, 'status', 'Не указан')}", size=16),
-                ft.Text(f"Заметки: {getattr(car, 'notes', 'Отсутствуют')}", size=16),
+                ft.Text(f"Статус: {car.status.value}", size=16),
+                ft.Text(f"Заметки: {car.notes or 'Без заметок'}", size=16),
             ],
             spacing=5,
         )
