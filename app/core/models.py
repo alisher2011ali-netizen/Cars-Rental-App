@@ -79,6 +79,7 @@ class Car(Base):
     model: Mapped[str] = mapped_column(String(50))
     year: Mapped[int] = mapped_column(Integer)
     plate_number: Mapped[str] = mapped_column(String(15), unique=True)
+    region_code: Mapped[str] = mapped_column(String(3))
     status: Mapped[CarStatus] = mapped_column(
         Enum(CarStatus), default=CarStatus.available
     )
@@ -188,7 +189,7 @@ class Payment(Base):
     amount: Mapped[Decimal] = mapped_column(DECIMAL)
     type: Mapped[PaymentType] = mapped_column(Enum(PaymentType))
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-    comment: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     is_parsed: Mapped[bool] = mapped_column(Boolean, default=False)
     operation_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

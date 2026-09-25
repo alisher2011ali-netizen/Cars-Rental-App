@@ -15,6 +15,19 @@ class RentalBuilder(Builder):
 
         rentals_list = db.scalars(select(Rental)).all()
         fab = self._build_fab("/add_rental", "Добавить аренду")
+        title = ft.AppBar(
+            leading=ft.Icon(
+                icon=ft.Icons.KEY,
+                size=28,
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            ),
+            title=ft.Text(
+                localization.rentals,
+                size=24,
+                weight="bold",
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            ),
+        )
 
         if not rentals_list:
             empty_message = self._build_not_data_container(
@@ -35,13 +48,7 @@ class RentalBuilder(Builder):
                     ft.Container(
                         content=ft.Column(
                             [
-                                ft.AppBar(
-                                    title=ft.Text(
-                                        f"📋 {localization.rentals}",
-                                        size=24,
-                                        weight="bold",
-                                    )
-                                ),
+                                title,
                                 empty_message,
                             ]
                         ),
@@ -53,7 +60,7 @@ class RentalBuilder(Builder):
             )
 
         rentals_content = ft.Container(
-            content=ft.Column([], spacing=20),
+            content=ft.Column([title], spacing=20),
             padding=40,
             bgcolor=ft.Colors.WHITE,
             expand=True,
@@ -160,7 +167,7 @@ class RentalBuilder(Builder):
         tenant_options = [
             ft.DropdownOption(
                 key=tenant.id,
-                text=f"{tenant.last_name} {tenant.first_name} ({tenant.phone_number})",
+                text=f"{tenant.name} ({tenant.phone_number})",
             )
             for tenant in tenants
         ]
@@ -182,7 +189,7 @@ class RentalBuilder(Builder):
         period_field = ft.TextField(
             label="Период платежа",
             keyboard_type=ft.KeyboardType.NUMBER,
-            on_change=lambda e: recalculate_total(),
+            on_change=lambda _: recalculate_total(),
         )
 
         error_text = ft.Text(
@@ -199,15 +206,15 @@ class RentalBuilder(Builder):
             value="0",
             keyboard_type=ft.KeyboardType.NUMBER,
             width=400,
-            on_change=lambda e: recalculate_total(),
+            on_change=lambda _: recalculate_total(),
         )
 
         tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
         start_picker = ft.DatePicker(
-            value=datetime.now(timezone.utc), on_change=lambda e: recalculate_total()
+            value=datetime.now(timezone.utc), on_change=lambda _: recalculate_total()
         )
         end_picker = ft.DatePicker(
-            value=tomorrow, on_change=lambda e: recalculate_total()
+            value=tomorrow, on_change=lambda _: recalculate_total()
         )
 
         manual_date_row = ft.Row(
@@ -215,12 +222,12 @@ class RentalBuilder(Builder):
                 ft.Button(
                     localization.start,
                     icon=ft.Icons.CALENDAR_MONTH,
-                    on_click=lambda e: self.page.show_dialog(start_picker),
+                    on_click=lambda _: self.page.show_dialog(start_picker),
                 ),
                 ft.Button(
                     localization.end,
                     icon=ft.Icons.CALENDAR_MONTH,
-                    on_click=lambda e: self.page.show_dialog(end_picker),
+                    on_click=lambda _: self.page.show_dialog(end_picker),
                 ),
             ],
             alignment=ft.MainAxisAlignment.CENTER,

@@ -7,10 +7,13 @@ class HomeBuilder(Builder):
     def build_home_view(self) -> ft.View:
         last_added_cars, images_dict = self.connector.get_last_added_cars()
 
-        title = ft.Text(
-            f"🚗 {localization.app_name}",
-            size=28,
-            weight="bold",
+        title = ft.AppBar(
+            ft.Text(
+                localization.app_name,
+                size=28,
+                weight="bold",
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            )
         )
 
         if not last_added_cars:

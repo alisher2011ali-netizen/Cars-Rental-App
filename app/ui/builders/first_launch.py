@@ -27,19 +27,17 @@ class FirstLaunchBuilder(Builder):
 
         content = ft.Column(
             [
-                ft.Row(
-                    [
-                        ft.Icon(
-                            icon=ft.Icons.CAR_RENTAL,
-                            size=100,
-                            align=ft.Alignment.CENTER,
-                        ),
-                        ft.Text(
-                            localization.app_name,
-                            size=28,
-                            weight="bold",
-                        ),
-                    ],
+                ft.AppBar(
+                    leading=ft.Icon(
+                        icon=ft.Icons.CAR_RENTAL,
+                        size=100,
+                        align=ft.Alignment.CENTER,
+                    ),
+                    title=ft.Text(
+                        localization.app_name,
+                        size=28,
+                        weight="bold",
+                    ),
                     margin=20,
                 ),
                 ft.Text(

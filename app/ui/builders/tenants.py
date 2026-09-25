@@ -13,6 +13,18 @@ class TenantBuilder(Builder):
 
         tenants_list = db.scalars(select(Tenant)).all()
         fab = self._build_fab("/add_tenant", localization.add_tenant)
+        title = ft.AppBar(
+            leading=ft.Icon(
+                icon=ft.Icons.PERSON,
+                size=28,
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            ),
+            title=ft.Text(
+                localization.tenants,
+                size=24,
+                weight="bold",
+            ),
+        )
 
         if not tenants_list:
             empty_message = self._build_not_data_container(
@@ -33,13 +45,7 @@ class TenantBuilder(Builder):
                     ft.Container(
                         content=ft.Column(
                             [
-                                ft.AppBar(
-                                    title=ft.Text(
-                                        f"👤 {localization.tenants}",
-                                        size=24,
-                                        weight="bold",
-                                    )
-                                ),
+                                title,
                                 empty_message,
                             ]
                         ),
@@ -56,7 +62,7 @@ class TenantBuilder(Builder):
             self.page.overlay.append(snack)
 
         tenants_content = ft.Column(
-            controls=[],
+            controls=[title],
             expand=True,
         )
 
@@ -64,7 +70,7 @@ class TenantBuilder(Builder):
             if not tenant.avatar:
                 avatar = ft.CircleAvatar(
                     content=ft.Text(
-                        tenant.last_name[0].upper(), size=50, color=ft.Colors.WHITE
+                        tenant.name[0].upper(), size=50, color=ft.Colors.WHITE
                     ),
                     bgcolor=ft.Colors.BLUE_GREY_400,
                     radius=65,
@@ -93,13 +99,13 @@ class TenantBuilder(Builder):
                                             ft.Text(
                                                 tenant.phone_number,
                                                 size=20,
-                                                on_tap=lambda e, phone_number=tenant.phone_number: (
+                                                on_tap=lambda _, phone_number=tenant.phone_number: (
                                                     on_phone_number_tap(phone_number)
                                                 ),
                                             ),
                                             ft.TextButton(
                                                 ft.Text(localization.details, size=16),
-                                                on_click=lambda e, t_id: (
+                                                on_click=lambda _, t_id: (
                                                     self.page.run_task(
                                                         self.page.push_route,
                                                         f"/tenants/{t_id}",
@@ -233,7 +239,7 @@ class TenantBuilder(Builder):
                     ft.Button(
                         localization.back,
                         icon=ft.Icons.ARROW_BACK,
-                        on_click=lambda e: self.page.run_task(
+                        on_click=lambda _: self.page.run_task(
                             self.page.push_route, "/tenants"
                         ),
                     ),

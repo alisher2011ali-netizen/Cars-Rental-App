@@ -12,11 +12,18 @@ class FinanceBuilder(Builder):
             db = session_factory()
 
         payments_list = db.scalars(select(Payment)).all()
-        title = ft.Text(
-            f"💰 {localization.finances}",
-            size=24,
-            weight="bold",
-            color=ft.Colors.BLACK,
+        title = ft.AppBar(
+            leading=ft.Icon(
+                icon=ft.Icons.ATTACH_MONEY_OUTLINED,
+                size=28,
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            ),
+            title=ft.Text(
+                f"💰 {localization.finances}",
+                size=24,
+                weight="bold",
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            ),
         )
         fab = self._build_fab("/add_payment", localization.add_operation)
 
@@ -24,14 +31,18 @@ class FinanceBuilder(Builder):
 
         async def pick_pdf_click(e):
             files = await file_picker.pick_files(
-                allow_multiple=False, file_type=ft.FilePickerFileType.ANY
+                allow_multiple=False,
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=["pdf"],
             )
+            if not files:
+                return
             file = files[0]
             if self.connector.save_statement(file.path):
-                self.page.update()
+                await self.page.push_route("/finances")
 
-        upload_button = ft.TextButton(
-            "Импортировать выписку PDF",
+        upload_button = ft.Button(
+            "Загрузить выписку",
             icon=ft.Icons.UPLOAD_FILE,
             on_click=pick_pdf_click,
             align=ft.Alignment.TOP_RIGHT,
@@ -56,13 +67,7 @@ class FinanceBuilder(Builder):
                     ft.Container(
                         content=ft.Column(
                             [
-                                ft.AppBar(
-                                    title=ft.Text(
-                                        f"💰 {localization.finances}",
-                                        size=24,
-                                        weight="bold",
-                                    )
-                                ),
+                                title,
                                 upload_button,
                                 empty_message,
                             ]
@@ -89,8 +94,6 @@ class FinanceBuilder(Builder):
                 else ft.Colors.ERROR
             )
 
-            # 1. Избавляемся от двойных минусов с помощью abs()
-            # 2. Форматируем до 2 знаков после запятой и отрезаем пустые нули на конце
             formatted_amount = f"{abs(payment.amount):.2f}".rstrip("0").rstrip(".")
 
             if not payment.is_parsed:
@@ -119,9 +122,9 @@ class FinanceBuilder(Builder):
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                             ),
                             ft.Text(
-                                f"{localization.comment}:\n{payment.comment}",
+                                f"{localization.notes}:\n{payment.notes}",
                                 size=14,
-                                color=ft.Colors.ON_SURFACE_VARIANT,  # Теперь текст не сольется с фоном
+                                color=ft.Colors.ON_SURFACE_VARIANT,
                             ),
                         ],
                         spacing=5,
@@ -148,7 +151,7 @@ class FinanceBuilder(Builder):
                                     ft.Row(
                                         [
                                             ft.Text(
-                                                f"{payment_type}{formatted_amount}",  # Используем отформатированную сумму
+                                                f"{payment_type}{formatted_amount}",
                                                 size=16,
                                                 weight=ft.FontWeight.BOLD,
                                                 color=text_color,
@@ -238,7 +241,7 @@ class FinanceBuilder(Builder):
             )
             new_payment = Payment(
                 amount=amount_input.value,
-                comment=comment_input.value,
+                notes=notes_input.value,
                 type=payment_type,
             )
             db.add(new_payment)
@@ -248,7 +251,7 @@ class FinanceBuilder(Builder):
             await self.page.push_route("/finances")
 
         amount_input = ft.TextField(label=localization.amount, width=300)
-        comment_input = ft.TextField(label=localization.comment, width=300)
+        notes_input = ft.TextField(label=localization.notes, width=300, multiline=True)
         type_dropdown = ft.Dropdown(
             options=[
                 ft.DropdownOption(key="income", text=localization.income),
@@ -293,7 +296,7 @@ class FinanceBuilder(Builder):
                         weight="bold",
                     ),
                     amount_input,
-                    comment_input,
+                    notes_input,
                     type_dropdown,
                     error_container,
                     save_button,

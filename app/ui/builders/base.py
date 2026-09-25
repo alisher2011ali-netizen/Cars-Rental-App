@@ -187,7 +187,7 @@ class Builder:
                         text,
                         size=18,
                         weight="bold",
-                        color=ft.Colors.BLACK_87,
+                        color=ft.Colors.ON_SURFACE_VARIANT,
                         align=ft.Alignment.CENTER,
                     ),
                     ft.TextButton(

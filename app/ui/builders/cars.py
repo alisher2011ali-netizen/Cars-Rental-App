@@ -13,6 +13,18 @@ class CarBuilder(Builder):
 
         cars_list = db.scalars(select(Car)).all()
         fab = self._build_fab("/add_car", localization.add_car)
+        title = ft.AppBar(
+            leading=ft.Icon(
+                icon=ft.Icons.DIRECTIONS_CAR,
+                size=28,
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            ),
+            title=ft.Text(
+                f"{localization.cars}",
+                size=24,
+                weight="bold",
+            ),
+        )
 
         if not cars_list:
             empty_message = self._build_not_data_container(
@@ -33,13 +45,7 @@ class CarBuilder(Builder):
                     ft.Container(
                         content=ft.Column(
                             [
-                                ft.AppBar(
-                                    title=ft.Text(
-                                        f"🚗 {localization.cars}",
-                                        size=24,
-                                        weight="bold",
-                                    )
-                                ),
+                                title,
                                 empty_message,
                             ]
                         ),
@@ -63,7 +69,7 @@ class CarBuilder(Builder):
 
         content = ft.Column(
             [
-                ft.Text(f"🚗 {localization.cars}", size=24, weight="bold"),
+                title,
                 cars_column,
             ],
             spacing=20,
@@ -106,6 +112,7 @@ class CarBuilder(Builder):
                 model=model_input.value,
                 year=year_input.value,
                 plate_number=plate_num_input.value,
+                region_code=region_code_input.value,
             )
             db.add(new_car)
             db.commit()
@@ -121,7 +128,12 @@ class CarBuilder(Builder):
         brand_input = ft.TextField(label=localization.brand, width=300)
         model_input = ft.TextField(label=localization.model, width=300)
         year_input = ft.TextField(label=localization.year_of_production, width=300)
-        plate_num_input = ft.TextField(label=localization.plate_number, width=300)
+        plate_num_input = ft.TextField(label=localization.plate_number, width=145)
+        region_code_input = ft.TextField(
+            label="Регион",
+            width=145,
+        )
+        num_input_row = ft.Row([plate_num_input, region_code_input])
         input = ft.Container(
             content=ft.Column(
                 [
@@ -129,7 +141,7 @@ class CarBuilder(Builder):
                     brand_input,
                     model_input,
                     year_input,
-                    plate_num_input,
+                    num_input_row,
                     ft.TextButton(
                         localization.upload_images,
                         icon=ft.Icons.UPLOAD_FILE,
@@ -143,7 +155,7 @@ class CarBuilder(Builder):
                     ft.Button(
                         localization.back,
                         icon=ft.Icons.ARROW_BACK,
-                        on_click=lambda e: self.page.run_task(
+                        on_click=lambda _: self.page.run_task(
                             self.page.push_route, "/cars"
                         ),
                     ),
@@ -180,18 +192,18 @@ class CarBuilder(Builder):
                 ],
             )
 
-        # Загрузка изображений (предполагается, что возвращаются base64 строки или пути)
-        # TODO: Заменить на актуальный вызов метода из Connector
-        car_images = []
+        car_images = car.images
         current_index = [0]
 
         # --- Компоненты полноэкранной галереи ---
-        gallery_img = ft.Image(src="", fit=ft.BoxFit.CONTAIN, expand=True)
+        gallery_img = ft.Image(
+            src=car_images[0].path, fit=ft.BoxFit.CONTAIN, expand=True
+        )
         gallery_counter = ft.Text(size=16, color=ft.Colors.WHITE, weight="bold")
 
         def update_gallery():
             if car_images:
-                gallery_img.src_base64 = car_images[current_index[0]]
+                gallery_img.src = car_images[current_index[0]].path
                 gallery_counter.value = f"{current_index[0] + 1} / {len(car_images)}"
                 gallery_img.update()
                 gallery_counter.update()
@@ -296,7 +308,7 @@ class CarBuilder(Builder):
                 images_row.controls.append(
                     ft.GestureDetector(
                         content=ft.Image(
-                            src_base64=img,
+                            src=img.path,
                             width=120,
                             height=120,
                             fit=ft.BoxFit.COVER,
@@ -322,7 +334,9 @@ class CarBuilder(Builder):
                 ft.Text(f"{car.brand} {car.model}", size=24, weight="bold"),
                 ft.Text(f"Год выпуска: {car.year}", size=16),
                 ft.Text(f"Гос. номер: {car.plate_number}", size=16),
-                ft.Text(f"Статус: {car.status.value}", size=16),
+                ft.Text(
+                    f"Статус: {localization.__getattr__(car.status.value)}", size=16
+                ),
                 ft.Text(f"Заметки: {car.notes or 'Без заметок'}", size=16),
             ],
             spacing=5,
@@ -335,7 +349,7 @@ class CarBuilder(Builder):
             active_rental_btn = ft.Button(
                 f"Текущая аренда #{active_rental.id}",
                 icon=ft.Icons.KEY,
-                on_click=lambda e: self.page.run_task(
+                on_click=lambda _: self.page.run_task(
                     self.page.push_route, f"/rentals/{active_rental.id}"
                 ),
                 icon_color=ft.Colors.PRIMARY,
@@ -348,7 +362,7 @@ class CarBuilder(Builder):
                     title=ft.Text(f"Детали авто #{car_id}"),
                     leading=ft.IconButton(
                         ft.Icons.ARROW_BACK,
-                        on_click=lambda e: self.page.run_task(
+                        on_click=lambda _: self.page.run_task(
                             self.page.push_route, "/cars"
                         ),
                     ),
