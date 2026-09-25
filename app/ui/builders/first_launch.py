@@ -38,7 +38,6 @@ class FirstLaunchBuilder(Builder):
                         size=28,
                         weight="bold",
                     ),
-                    margin=20,
                 ),
                 ft.Text(
                     localization.hello_text,
