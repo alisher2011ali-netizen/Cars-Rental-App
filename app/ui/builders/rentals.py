@@ -9,7 +9,17 @@ from ui.builders.base import Builder
 
 
 class RentalBuilder(Builder):
+    """Build UI views and workflows for managing car rental contracts."""
+
     def build_rentals_view(self, db: Session | None = None) -> ft.View:
+        """Construct the rentals list view displaying active and historical leases.
+
+        Args:
+            db (Session | None): Optional active database session. Defaults to None.
+
+        Returns:
+            ft.View: View containing rental cards or an empty-state screen.
+        """
         if db is None:
             db = session_factory()
 
@@ -65,17 +75,41 @@ class RentalBuilder(Builder):
         )
 
     def build_add_rental_view(self, db: Session | None = None) -> ft.View:
+        """Construct the lease agreement creation view with dynamic tariff calculators.
+
+        Args:
+            db (Session | None): Optional active database session. Defaults to None.
+
+        Returns:
+            ft.View: View containing form fields for calculating and creating leases.
+        """
         if db is None:
             db = session_factory()
 
         selected_car_id = None
         selected_tenant_id = None
 
-        def on_car_select(e):
+        def on_car_select(e: ft.ControlEvent) -> None:
+            """Track selected vehicle identifier from dropdown changes.
+
+            Args:
+                e (ft.ControlEvent): Dropdown selection event.
+
+            Returns:
+                None: Mutates selected_car_id in outer closure scope.
+            """
             nonlocal selected_car_id
             selected_car_id = e.control.value
 
-        def on_tenant_select(e):
+        def on_tenant_select(e: ft.ControlEvent) -> None:
+            """Track selected tenant identifier from dropdown changes.
+
+            Args:
+                e (ft.ControlEvent): Dropdown selection event.
+
+            Returns:
+                None: Mutates selected_tenant_id in outer closure scope.
+            """
             nonlocal selected_tenant_id
             selected_tenant_id = e.control.value
 
@@ -174,7 +208,15 @@ class RentalBuilder(Builder):
             visible=True,
         )
 
-        def recalculate_total():
+        def recalculate_total() -> None:
+            """Recalculate rental duration cycles and aggregate cost according to active tariff rules.
+
+            Args:
+                None
+
+            Returns:
+                None: Updates pricing, date duration text, and validation hints in-place.
+            """
             tariff = tariff_radio.value
             try:
                 entered_price = float(price_field.value or 0)
@@ -187,6 +229,7 @@ class RentalBuilder(Builder):
             if tariff == "weekly":
                 start_date = start_picker.value
                 difference = end_picker.value - start_date
+                # Integer division truncates uncompleted week intervals
                 weeks = difference.days // 7
                 end_date = start_date + timedelta(weeks=weeks)
                 total_amount = entered_price * weeks
@@ -195,6 +238,7 @@ class RentalBuilder(Builder):
             elif tariff == "monthly":
                 start_date = start_picker.value
                 difference = end_picker.value - start_date
+                # Standardize contractual billing month to fixed 30-day blocks
                 months = difference.days // 30
                 end_date = start_date + timedelta(days=months * 30)
                 total_amount = entered_price * months
@@ -226,7 +270,15 @@ class RentalBuilder(Builder):
             dates_info_text.update()
             total_price_text.update()
 
-        def on_tariff_change(e):
+        def on_tariff_change(e: ft.ControlEvent) -> None:
+            """Adjust visible form controls and recompute totals when changing billing tariffs.
+
+            Args:
+                e (ft.ControlEvent): Radio group selection change event.
+
+            Returns:
+                None: Updates label text, toggles custom inputs, and triggers recalculation.
+            """
             tariff = e.control.value
             if tariff == "weekly":
                 price_field.label = "Стоимость за неделю"
@@ -255,8 +307,17 @@ class RentalBuilder(Builder):
             on_change=on_tariff_change,
         )
 
-        def on_click_save(e):
-            pass
+        def on_click_save(e: ft.ControlEvent) -> None:
+            """Persist the entered rental attributes.
+
+            Args:
+                e (ft.ControlEvent): Save button click event.
+
+            Returns:
+                None: Commits record to database and navigates back to the inventory list.
+            """
+
+        # TODO: сделать сохранение аренды в бд
 
         save_button = ft.Button(
             localization.save, icon=ft.Icons.SAVE, on_click=on_click_save

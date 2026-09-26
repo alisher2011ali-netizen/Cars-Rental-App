@@ -4,22 +4,58 @@ from ui.builders.base import Builder
 
 
 class FirstLaunchBuilder(Builder):
-    def __init__(self, page):
+    """Build the initial setup and onboarding view for first-time application launches."""
+
+    def __init__(self, page: ft.Page) -> None:
+        """Initialize the onboarding builder with default language and currency configurations.
+
+        Args:
+            page (ft.Page): The root page container provided by the Flet runtime.
+
+        Returns:
+            None: Sets initial state for language and currency selections.
+        """
         super().__init__(page)
         self.language = "ru"
         self.currency = "RUB"
 
     def build_first_launch_view(self) -> ft.View:
-        def on_language_change(e):
+        """Construct the first-launch onboarding view with language and currency selectors.
+
+        Args:
+            None
+
+        Returns:
+            ft.View: View control housing the onboarding form elements.
+        """
+
+        def on_language_change(e: ft.ControlEvent) -> None:
+            """Update selected language, persist choice, and reload the active view.
+
+            Args:
+                e (ft.ControlEvent): Selection event emitted by the language dropdown.
+
+            Returns:
+                None: Re-renders the onboarding view with updated localization strings.
+            """
             selected_language = e.control.value
             self.prefs.set("language_code", selected_language)
             self.language = selected_language
             localization.load_lang(selected_language)
 
+            # Rebuild the current view immediately so the newly loaded translation strings take effect across all labels
             self.page.views.clear()
             self.page.views.append(self.build_first_launch_view())
 
-        def on_currency_change(e):
+        def on_currency_change(e: ft.ControlEvent) -> None:
+            """Update and persist the preferred transaction display currency.
+
+            Args:
+                e (ft.ControlEvent): Selection event emitted by the currency dropdown.
+
+            Returns:
+                None: Updates local and global localization state in-place.
+            """
             selected_currency = e.control.value
             self.prefs.set("currency", selected_currency)
             self.currency = selected_currency
@@ -101,6 +137,14 @@ class FirstLaunchBuilder(Builder):
             route="/first_launch", controls=[content], scroll=ft.ScrollMode.AUTO
         )
 
-    async def _on_continue(self, e):
+    async def _on_continue(self, e: ft.ControlEvent) -> None:
+        """Mark onboarding as complete and route the user to the main vehicle catalog.
+
+        Args:
+            e (ft.ControlEvent): Action button click event.
+
+        Returns:
+            None: Persists state flag and asynchronously triggers navigation.
+        """
         await self.prefs.set("is_first_launch", False)
         await self.page.push_route("/cars")

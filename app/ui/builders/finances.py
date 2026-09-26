@@ -7,7 +7,17 @@ from ui.builders.base import Builder
 
 
 class FinanceBuilder(Builder):
+    """Build UI views and workflows for financial records and statement processing."""
+
     def build_finances_view(self, db: Session | None = None) -> ft.View:
+        """Construct the financial transactions overview screen with PDF import capabilities.
+
+        Args:
+            db (Session | None): Optional active database session. Defaults to None.
+
+        Returns:
+            ft.View: View containing the list of parsed/manual payments or an empty state.
+        """
         if db is None:
             db = session_factory()
 
@@ -29,7 +39,15 @@ class FinanceBuilder(Builder):
 
         file_picker = ft.FilePicker()
 
-        async def pick_pdf_click(e):
+        async def pick_pdf_click(e: ft.ControlEvent) -> None:
+            """Open file picker to ingest a PDF bank statement and refresh the view on success.
+
+            Args:
+                e (ft.ControlEvent): Button click interaction event.
+
+            Returns:
+                None: Triggers parsing and refreshes finances view if parsing succeeded.
+            """
             files = await file_picker.pick_files(
                 allow_multiple=False,
                 file_type=ft.FilePickerFileType.CUSTOM,
@@ -38,6 +56,7 @@ class FinanceBuilder(Builder):
             if not files:
                 return
             file = files[0]
+            # Refresh current view only on successful parse to reflect newly created transactions
             if self.connector.save_statement(file.path):
                 await self.page.push_route("/finances")
 
@@ -84,10 +103,27 @@ class FinanceBuilder(Builder):
         )
 
     def build_add_payment_view(self, db: Session | None = None) -> ft.View:
+        """Construct the manual payment logging screen with input validation.
+
+        Args:
+            db (Session | None): Optional active database session. Defaults to None.
+
+        Returns:
+            ft.View: View containing form fields for logging transactions.
+        """
         if db is None:
             db = session_factory()
 
-        async def save_payment(e):
+        async def save_payment(e: ft.ControlEvent) -> None:
+            """Validate monetary inputs and persist a new payment transaction.
+
+            Args:
+                e (ft.ControlEvent): Form submit button interaction event.
+
+            Returns:
+                None: Validates input, writes to database, and navigates back.
+            """
+            # Reject non-digit inputs before database persistence to prevent cast exceptions
             if not amount_input.value.isdigit():
                 amount_input.value = ""
                 error_text.value = f"{localization.amount_only_can_be_digit}!"

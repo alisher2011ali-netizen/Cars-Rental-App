@@ -12,12 +12,32 @@ logger = logging.getLogger(__name__)
 
 
 class Connector:
-    def __init__(self):
+    """Coordinate database persistence, file management, and external data parsing."""
+
+    def __init__(self) -> None:
+        """Initialize the connector with supporting utility services.
+
+        Args:
+            None
+
+        Returns:
+            None: Initializes service instances.
+        """
         self.file_manager = FileManager()
 
     def get_last_added_cars(
         self, limit: int = 5, db: Session | None = None
     ) -> tuple[list[Car], dict[int, list[str]]]:
+        """Fetch the most recently registered cars along with their base64-encoded photos.
+
+        Args:
+            limit (int): Maximum number of vehicle records to retrieve. Defaults to 5.
+            db (Session | None): Optional existing database session. Defaults to None.
+
+        Returns:
+            tuple[list[Car], dict[int, list[str]]]: A tuple containing the list of retrieved
+                Car records and a mapping of car IDs to their base64-encoded image payloads.
+        """
         if db is None:
             db = session_factory()
 
@@ -37,6 +57,7 @@ class Connector:
                 for car_image in car.images:
                     with open(car_image.path, "rb") as f:
                         image_bytes = f.read()
+                        # Base64 string encoding is required for direct inline rendering in UI views
                         images[car.id].append(
                             base64.b64encode(image_bytes).decode("utf-8")
                         )
@@ -44,6 +65,7 @@ class Connector:
             logger.exception(
                 "An error occurred while retrieving images for the last added cars."
             )
+            # Fall back to empty image collections to preserve vehicle metadata access if disk reads fail
             images = {car.id: [] for car in last_added_cars}
 
         return last_added_cars, images
@@ -57,10 +79,23 @@ class Connector:
         category: str = "car_photo",
         db: Session | None = None,
     ) -> str:
+        """Store an uploaded image on disk and register its metadata in the database.
+
+        Args:
+            image_path (str): Filesystem path to the temporary source image.
+            object_id (int): Primary key of the entity associated with the image.
+            object_type (str): Domain entity discriminator ('car' or 'tenant').
+            category (str): Sub-category classification for the image. Defaults to 'car_photo'.
+            db (Session | None): Optional existing database session. Defaults to None.
+
+        Returns:
+            str: Destination storage path if successfully saved, or an empty string on failure.
+        """
         if db is None:
             db = session_factory()
 
         try:
+            # Append a short hash to avoid filesystem collisions when overwriting existing photos
             unique_number = uuid.uuid4().hex[:8]
             if object_type == "car":
                 new_path = f"data/images/cars/{object_id}_{unique_number}.jpg"
@@ -92,12 +127,22 @@ class Connector:
             return ""
 
     def save_statement(self, file_path: str, db: Session | None = None) -> bool:
+        """Parse an external bank PDF statement and persist all extracted payments.
+
+        Args:
+            file_path (str): Filesystem path to the bank statement PDF file.
+            db (Session | None): Optional existing database session. Defaults to None.
+
+        Returns:
+            bool: True if parsing and database insertion succeeded, False otherwise.
+        """
         if db is None:
             db = session_factory()
 
         try:
             data = process_sber_pdf(file_path)
             for payment in data:
+                # Infer transaction direction based on sign since raw statements combine both flows
                 payment["type"] = (
                     PaymentType.income
                     if payment["value_account_currency"] >= 0

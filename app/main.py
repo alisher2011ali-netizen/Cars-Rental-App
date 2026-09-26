@@ -7,7 +7,15 @@ from core.models import init_db
 from ui.router import UIRouter
 
 
-async def main(page: ft.Page):
+async def main(page: ft.Page) -> None:
+    """Initialize core services and launch the main application interface.
+
+    Args:
+        page (ft.Page): The root page container provided by the Flet runtime.
+
+    Returns:
+        None: This function does not return a value.
+    """
     try:
         logger = logging.getLogger(__name__)
 
@@ -21,8 +29,10 @@ async def main(page: ft.Page):
         page.fonts = {"NotoSansSC": font_path}
         page.theme = ft.Theme(
             font_family="NotoSansSC",
+            # Disable transitions to prevent visual stutter and improve navigation responsiveness
             page_transitions=ft.PageTransitionsTheme(
-                android=ft.PageTransitionTheme.NONE, linux=ft.PageTransitionTheme.NONE
+                android=ft.PageTransitionTheme.NONE,
+                linux=ft.PageTransitionTheme.NONE,
             ),
         )
         page.window.width = 360

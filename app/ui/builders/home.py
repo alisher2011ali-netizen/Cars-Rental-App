@@ -4,7 +4,17 @@ from ui.builders.base import Builder
 
 
 class HomeBuilder(Builder):
+    """Build UI views and widgets for the primary dashboard and home screen."""
+
     def build_home_view(self) -> ft.View:
+        """Construct the main home view displaying recent vehicles or a placeholder.
+
+        Args:
+            None
+
+        Returns:
+            ft.View: View containing the dashboard layout, navigation bar, and recent cars.
+        """
         last_added_cars, images_dict = self.connector.get_last_added_cars()
 
         title = ft.AppBar(

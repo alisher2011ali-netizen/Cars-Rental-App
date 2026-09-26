@@ -16,15 +16,34 @@ logger = logging.getLogger(__name__)
 
 
 class UIRouter:
-    def __init__(self, page: ft.Page):
+    """Manage application routing, view transitions, and route-level error handling."""
+
+    def __init__(self, page: ft.Page) -> None:
+        """Initialize the router with the target root page and view builders.
+
+        Args:
+            page (ft.Page): The root page container provided by the Flet runtime.
+
+        Returns:
+            None: Initializes router components.
+        """
         self.page = page
         self.builder = Builder(self.page)
 
-    async def build(self):
+    async def build(self) -> None:
+        """Bootstrap page configurations, register routing handlers, and render the initial view.
+
+        Args:
+            None
+
+        Returns:
+            None: Asynchronously updates the UI view tree.
+        """
         self.page.title = "Cars Rental App"
         self.page.on_route_change = self.route_change
         self.page.navigation_bar = self.builder.get_nav_bar(0)
         try:
+            # Check for non-False values to treat an unset preference key (None) as a first-launch event
             if await self.builder.prefs.get("is_first_launch") != False:
                 fisrt_launch_builder = FirstLaunchBuilder(self.page)
                 await self.builder.prefs.set("is_first_launch", True)
@@ -42,13 +61,19 @@ class UIRouter:
         self.page.views.append(view)
         self.page.update()
 
-    def route_change(self, e):
-        """Handler for route change events. Updates the page view based on the new route.
-        :params
-        e: RouteChangeEvent"""
+    def route_change(self, e: ft.RouteChangeEvent) -> None:
+        """Resolve route transitions and update the visible page view.
+
+        Args:
+            e (ft.RouteChangeEvent): Route change event containing the target URI.
+
+        Returns:
+            None: Dispatches route matching and replaces current views.
+        """
         troute = ft.TemplateRoute(e.route)
 
         try:
+            # Use regex pattern matching in template routes to safely extract numeric domain IDs
             if troute.match("/cars/:id(\\d+)"):
                 car_builder = CarBuilder(self.page)
                 view = car_builder.build_car_details_view(int(troute.id))
@@ -96,7 +121,6 @@ class UIRouter:
             logger.exception(f"An error occurred while changing route to {e.route}.")
             view = self._build_error_view(str(ex), e.route)
 
-        # Only after we have the view, we try to update the page. This way we avoid clearing the page if view creation fails.
         try:
             view.scroll = ft.ScrollMode.AUTO
             self.page.views.clear()
@@ -106,6 +130,15 @@ class UIRouter:
             logger.exception("An error occurred while updating the page.")
 
     def _build_error_view(self, ex_str: str, route: str) -> ft.View:
+        """Construct a standardized fallback view displaying routing or runtime errors.
+
+        Args:
+            ex_str (str): String representation of the captured exception.
+            route (str): Target navigation route where the failure occurred.
+
+        Returns:
+            ft.View: Dedicated error view container presenting failure diagnostics.
+        """
         error_content = ft.Container(
             content=ft.Column(
                 [

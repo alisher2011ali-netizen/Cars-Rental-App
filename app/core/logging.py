@@ -3,12 +3,17 @@ import os
 from logging.handlers import RotatingFileHandler
 
 
-def setup_logging():
-    """
-    Sets up logging for the application.
-    Creates a 'logs' directory in FLET_APP_STORAGE_DATA if it doesn't exist
-    and configures a rotating file handler.
-    Logs are written to 'logs/app.log' with a maximum size of 5 MB and up to 3 backup files.
+def setup_logging() -> None:
+    """Configure rotating file logging for the application.
+
+    Create a dedicated 'logs' directory within the resolved storage path and attach
+    a rotating file handler with a 5 MB limit and up to 3 backup archives.
+
+    Args:
+        None
+
+    Returns:
+        None: Logging subsystem is configured in-place.
     """
     app_data_path = os.getenv("FLET_APP_STORAGE_DATA", os.getcwd())
 

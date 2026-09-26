@@ -5,9 +5,13 @@ from parsing.sber_parser import parse_sber_text_to_dict
 
 
 def process_sber_pdf(input_pdf_path: str) -> list[dict]:
-    """
-    Принимает путь к PDF, достает из него текст, парсит в список транзакций
-    и удаляет за собой мусор.
+    """Extract text from a PDF, parse it into transactions, and clean up.
+
+    Args:
+        input_pdf_path: The path to the target PDF file.
+
+    Returns:
+        list[dict]: A list of parsed transaction dictionaries.
     """
     if not input_pdf_path.lower().endswith(".pdf"):
         raise ValueError("Файл должен быть в формате PDF")

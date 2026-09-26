@@ -1,3 +1,6 @@
+from collections.abc import Callable, Coroutine
+from typing import Any
+
 import flet as ft
 from core.models import Tenant, session_factory
 from services.localization import localization
@@ -7,7 +10,17 @@ from ui.builders.base import Builder
 
 
 class TenantBuilder(Builder):
+    """Build UI views and controls for tenant directory browsing and creation."""
+
     def build_tenants_view(self, db: Session | None = None) -> ft.View:
+        """Construct the primary tenants listing view.
+
+        Args:
+            db (Session | None): Optional active database session. Defaults to None.
+
+        Returns:
+            ft.View: View containing the list of registered tenants or an empty placeholder.
+        """
         if db is None:
             db = session_factory()
 
@@ -61,6 +74,14 @@ class TenantBuilder(Builder):
         )
 
     def build_add_tenant_view(self, db: Session | None = None) -> ft.View:
+        """Construct the tenant creation form view with document upload handlers.
+
+        Args:
+            db (Session | None): Optional active database session. Defaults to None.
+
+        Returns:
+            ft.View: View containing input fields and file picker actions for registering a tenant.
+        """
         if db is None:
             db = session_factory()
 
@@ -76,8 +97,20 @@ class TenantBuilder(Builder):
         sub_passport_picker = ft.FilePicker()
         drive_license_picker = ft.FilePicker()
 
-        def make_picker_callback(picker: ft.FilePicker, path_key: str):
-            async def callback(e):
+        def make_picker_callback(
+            picker: ft.FilePicker, path_key: str
+        ) -> Callable[[ft.ControlEvent], Coroutine[Any, Any, None]]:
+            """Generate an asynchronous file picker handler for a designated document category.
+
+            Args:
+                picker (ft.FilePicker): The target file picker control instance.
+                path_key (str): The state dictionary key where the picked file path should be stored.
+
+            Returns:
+                Callable[[ft.ControlEvent], Coroutine[Any, Any, None]]: An async event handler.
+            """
+
+            async def callback(e: ft.ControlEvent) -> None:
                 files = await picker.pick_files(
                     allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
                 )
@@ -95,7 +128,15 @@ class TenantBuilder(Builder):
             drive_license_picker, "drive_license"
         )
 
-        async def save_tenant(e=None):
+        async def save_tenant(e: ft.ControlEvent | None = None) -> None:
+            """Persist the new tenant and copy all chosen identity documents to local storage.
+
+            Args:
+                e (ft.ControlEvent | None): Optional event triggered by the form submission button. Defaults to None.
+
+            Returns:
+                None: Commits records and redirects to the tenants catalog.
+            """
             new_tenant = Tenant(
                 name=name_input.value.strip(),
                 phone_number=phone_input.value,
@@ -103,6 +144,7 @@ class TenantBuilder(Builder):
             )
             db.add(new_tenant)
             db.commit()
+            # Refresh to load server-generated identity columns required for child image links
             db.refresh(new_tenant)
 
             for img_category in ["avatar", "passport", "sub_passport", "drive_license"]:
