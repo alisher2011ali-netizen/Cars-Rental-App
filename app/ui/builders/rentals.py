@@ -14,7 +14,7 @@ class RentalBuilder(Builder):
             db = session_factory()
 
         rentals_list = db.scalars(select(Rental)).all()
-        fab = self._build_fab("/add_rental", "Добавить аренду")
+        fab = self.build_fab("/add_rental", "Добавить аренду")
         title = ft.AppBar(
             leading=ft.Icon(
                 icon=ft.Icons.KEY,
@@ -23,13 +23,13 @@ class RentalBuilder(Builder):
             ),
             title=ft.Text(
                 localization.rentals,
-                size=24,
-                weight="bold",
+                size=30,
+                weight=ft.FontWeight.BOLD,
             ),
         )
 
         if not rentals_list:
-            return self._build_not_data_view(
+            return self.build_not_data_view(
                 title=title,
                 icon=ft.Icon(
                     ft.Icons.KEY,
@@ -53,58 +53,12 @@ class RentalBuilder(Builder):
         )
 
         for rental in rentals_list:
-            match rental.status.value:
-                case "active":
-                    status_text = localization.active
-                    status_color = ft.Colors.GREEN_500
-                case "completed":
-                    status_text = localization.completed
-                    status_color = ft.Colors.BLACK_87
-                case "cancelled":
-                    status_text = localization.cancelled
-                    status_color = ft.Colors.RED_500
-                case _:
-                    status_text = localization.other
-                    status_color = ft.Colors.GREY_500
-
-            rental_card = ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Text(
-                            f"{localization.status}: {status_text}",
-                            size=16,
-                            color=status_color,
-                            weight="bold",
-                        ),
-                        ft.Text(
-                            f"{localization.car}: {rental.car.brand} {rental.car.model} ({rental.car.plate_number})",
-                            size=14,
-                        ),
-                        ft.Text(
-                            f"{localization.tenant}: {rental.tenant.last_name} {rental.tenant.first_name} ({rental.tenant.phone_number})",
-                            size=14,
-                        ),
-                        ft.Text(
-                            f"{localization.income_in_total}: {rental.total_cost} руб."
-                        ),
-                        ft.Text(
-                            f"{localization.start}: {rental.start_date}",
-                            size=14,
-                        ),
-                        ft.Text(f"{localization.end}: {rental.end_date}", size=14),
-                    ],
-                    spacing=5,
-                ),
-                padding=15,
-                border_radius=12,
-                bgcolor=ft.Colors.GREY_100,
-                shadow=True,
-            )
+            rental_card = self.create_rental_card(rental)
             rentals_content.content.controls.append(rental_card)
 
         return ft.View(
             route="/rentals",
-            navigation_bar=self._get_nav_bar(3),
+            navigation_bar=self.get_nav_bar(3),
             controls=[rentals_content],
             floating_action_button=fab,
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
@@ -164,11 +118,11 @@ class RentalBuilder(Builder):
             on_select=on_tenant_select,
         )
 
-        dates_info_text = ft.Text("Срок: 0 дней", size=16, weight="bold")
+        dates_info_text = ft.Text("Срок: 0 дней", size=16, weight=ft.FontWeight.BOLD)
         total_price_text = ft.Text(
             f"{localization.total_to_be_paid}: 0 руб.",
             size=20,
-            weight="bold",
+            weight=ft.FontWeight.BOLD,
             color=ft.Colors.GREEN_700,
         )
 
@@ -313,7 +267,7 @@ class RentalBuilder(Builder):
                 ft.Text(
                     f"📋 {localization.add_rental}",
                     size=24,
-                    weight="bold",
+                    weight=ft.FontWeight.BOLD,
                 ),
                 car_dropdown,
                 tenant_dropdown,
@@ -330,7 +284,7 @@ class RentalBuilder(Builder):
         )
         return ft.View(
             route="/add_rental",
-            navigation_bar=self._get_nav_bar(3),
+            navigation_bar=self.get_nav_bar(3),
             controls=[
                 ft.Container(content=content, padding=20, alignment=ft.Alignment.CENTER)
             ],

@@ -23,7 +23,7 @@ class UIRouter:
     async def build(self):
         self.page.title = "Cars Rental App"
         self.page.on_route_change = self.route_change
-        self.page.navigation_bar = self.builder._get_nav_bar(0)
+        self.page.navigation_bar = self.builder.get_nav_bar(0)
         try:
             if await self.builder.prefs.get("is_first_launch") != False:
                 fisrt_launch_builder = FirstLaunchBuilder(self.page)
@@ -112,7 +112,7 @@ class UIRouter:
                     ft.Text(
                         localization.error_loading,
                         size=20,
-                        weight="bold",
+                        weight=ft.FontWeight.BOLD,
                         color=ft.Colors.RED,
                     ),
                     ft.Text(
@@ -126,8 +126,8 @@ class UIRouter:
                         color=ft.Colors.RED_800,
                     ),
                 ],
-                alignment="center",
-                horizontal_alignment="center",
+                alignment=ft.Alignment.CENTER,
+                horizontal_alignment=ft.MainAxisAlignment.CENTER,
                 spacing=15,
             ),
             padding=40,

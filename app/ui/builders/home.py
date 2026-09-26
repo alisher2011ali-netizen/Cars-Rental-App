@@ -11,7 +11,7 @@ class HomeBuilder(Builder):
             title=ft.Text(
                 localization.app_name,
                 size=40,
-                weight="bold",
+                weight=ft.FontWeight.BOLD,
             )
         )
 
@@ -38,10 +38,7 @@ class HomeBuilder(Builder):
             )
 
             content = ft.Column(
-                [
-                    title,
-                    message,
-                ],
+                [message],
                 alignment=ft.Alignment.TOP_CENTER,
                 horizontal_alignment=ft.Alignment.CENTER,
                 spacing=20,
@@ -49,7 +46,7 @@ class HomeBuilder(Builder):
 
             return ft.View(
                 route="/",
-                navigation_bar=self._get_nav_bar(0),
+                navigation_bar=self.get_nav_bar(0),
                 controls=[
                     ft.Container(
                         content=content,
@@ -67,9 +64,9 @@ class HomeBuilder(Builder):
         for car in last_added_cars:
             car_images = images_dict.get(car.id, [])
             if car_images:
-                card = self._create_car_card(car, car_images)
+                card = self.create_car_card(car, car_images)
             else:
-                card = self._create_car_card(car)
+                card = self.create_car_card(car)
             cars_column.controls.append(card)
 
         subtitle = ft.Text(
@@ -91,12 +88,12 @@ class HomeBuilder(Builder):
 
         return ft.View(
             route="/",
-            navigation_bar=self._get_nav_bar(0),
+            navigation_bar=self.get_nav_bar(0),
             controls=[
+                title,
                 ft.Container(
                     content=content,
                     padding=20,
-                    bgcolor=ft.Colors.WHITE,
-                )
+                ),
             ],
         )

@@ -12,7 +12,7 @@ class CarBuilder(Builder):
             db = session_factory()
 
         cars_list = db.scalars(select(Car)).all()
-        fab = self._build_fab("/add_car", localization.add_car)
+        fab = self.build_fab("/add_car", localization.add_car)
         title = ft.AppBar(
             leading=ft.Icon(
                 icon=ft.Icons.DIRECTIONS_CAR,
@@ -21,13 +21,13 @@ class CarBuilder(Builder):
             ),
             title=ft.Text(
                 f"{localization.cars}",
-                size=24,
-                weight="bold",
+                size=30,
+                weight=ft.FontWeight.BOLD,
             ),
         )
 
         if not cars_list:
-            return self._build_not_data_view(
+            return self.build_not_data_view(
                 title=title,
                 icon=ft.Icon(
                     ft.Icons.DIRECTIONS_CAR,
@@ -51,14 +51,11 @@ class CarBuilder(Builder):
 
         for car in cars_list:
             car_images = [img.path for img in car.images]
-            card = self._create_car_card(car, car_images)
+            card = self.create_car_card(car, car_images)
             cars_column.controls.append(card)
 
         content = ft.Column(
-            [
-                title,
-                cars_column,
-            ],
+            [cars_column],
             spacing=20,
             horizontal_alignment=ft.Alignment.CENTER,
         )
@@ -71,8 +68,8 @@ class CarBuilder(Builder):
 
         return ft.View(
             route="/cars",
-            navigation_bar=self._get_nav_bar(1),
-            controls=[cars_content],
+            navigation_bar=self.get_nav_bar(1),
+            controls=[title, cars_content],
             floating_action_button=fab,
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
@@ -109,7 +106,7 @@ class CarBuilder(Builder):
                     image_path=image_path, object_id=new_car.id, object_type="car"
                 )
 
-            self._build_complete_snack_bar()
+            self.build_complete_snack_bar()
             await self.page.push_route("/cars")
 
         brand_input = ft.TextField(label=localization.brand, width=300)
@@ -124,7 +121,7 @@ class CarBuilder(Builder):
         input = ft.Container(
             content=ft.Column(
                 [
-                    ft.Text(localization.new_car, size=24, weight="bold"),
+                    ft.Text(localization.new_car, size=24, weight=ft.FontWeight.BOLD),
                     brand_input,
                     model_input,
                     year_input,
@@ -155,7 +152,7 @@ class CarBuilder(Builder):
 
         return ft.View(
             route="/add_car",
-            navigation_bar=self._get_nav_bar(1),
+            navigation_bar=self.get_nav_bar(1),
             controls=[input],
         )
 
@@ -186,7 +183,9 @@ class CarBuilder(Builder):
         gallery_img = ft.Image(
             src=car_images[0].path, fit=ft.BoxFit.CONTAIN, expand=True
         )
-        gallery_counter = ft.Text(size=16, color=ft.Colors.WHITE, weight="bold")
+        gallery_counter = ft.Text(
+            size=16, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD
+        )
 
         def update_gallery():
             if car_images:
@@ -318,7 +317,7 @@ class CarBuilder(Builder):
         # --- Информационный блок ---
         car_info = ft.Column(
             [
-                ft.Text(f"{car.brand} {car.model}", size=24, weight="bold"),
+                ft.Text(f"{car.brand} {car.model}", size=24, weight=ft.FontWeight.BOLD),
                 ft.Text(f"Год выпуска: {car.year}", size=16),
                 ft.Text(f"Гос. номер: {car.plate_number}", size=16),
                 ft.Text(

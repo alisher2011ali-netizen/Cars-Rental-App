@@ -20,12 +20,12 @@ class FinanceBuilder(Builder):
             ),
             title=ft.Text(
                 localization.finances,
-                size=24,
-                weight="bold",
+                size=30,
+                weight=ft.FontWeight.BOLD,
                 color=ft.Colors.ON_SURFACE_VARIANT,
             ),
         )
-        fab = self._build_fab("/add_payment", localization.add_operation)
+        fab = self.build_fab("/add_payment", localization.add_operation)
 
         file_picker = ft.FilePicker()
 
@@ -49,7 +49,7 @@ class FinanceBuilder(Builder):
         )
 
         if not payments_list:
-            return self._build_not_data_view(
+            return self.build_not_data_view(
                 title=ft.Column([title, upload_button]),
                 icon=ft.Icon(
                     ft.Icons.ATTACH_MONEY,
@@ -66,7 +66,7 @@ class FinanceBuilder(Builder):
             )
 
         payments_content = ft.Container(
-            content=ft.Column([title, upload_button], spacing=20),
+            content=ft.Column([upload_button], spacing=20),
             padding=5,
             expand=True,
         )
@@ -77,8 +77,8 @@ class FinanceBuilder(Builder):
 
         return ft.View(
             route="/finances",
-            navigation_bar=self._get_nav_bar(4),
-            controls=[payments_content],
+            navigation_bar=self.get_nav_bar(4),
+            controls=[title, payments_content],
             floating_action_button=fab,
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
@@ -108,7 +108,7 @@ class FinanceBuilder(Builder):
             db.add(new_payment)
             db.commit()
 
-            self.page.overlay.append(self._build_complete_snack_bar())
+            self.page.overlay.append(self.build_complete_snack_bar())
             await self.page.push_route("/finances")
 
         amount_input = ft.TextField(label=localization.amount, width=300)
@@ -154,7 +154,7 @@ class FinanceBuilder(Builder):
                     ft.Text(
                         f"💰 {localization.new_operation}",
                         size=24,
-                        weight="bold",
+                        weight=ft.FontWeight.BOLD,
                     ),
                     amount_input,
                     notes_input,
@@ -167,6 +167,6 @@ class FinanceBuilder(Builder):
         )
         return ft.View(
             route="/add_payment",
-            navigation_bar=self._get_nav_bar(4),
+            navigation_bar=self.get_nav_bar(4),
             controls=[ft.Container(content=content, alignment=ft.Alignment.CENTER)],
         )

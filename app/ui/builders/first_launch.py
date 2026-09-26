@@ -36,21 +36,21 @@ class FirstLaunchBuilder(Builder):
                     title=ft.Text(
                         localization.app_name,
                         size=28,
-                        weight="bold",
+                        weight=ft.FontWeight.BOLD,
                     ),
                 ),
                 ft.Text(
                     localization.hello_text,
                     size=24,
-                    weight="bold",
-                    text_align="center",
+                    weight=ft.FontWeight.BOLD,
+                    text_align=ft.Alignment.CENTER,
                 ),
                 ft.Column(
                     [
                         ft.Text(
                             localization.choose_language,
                             size=20,
-                            text_align="center",
+                            text_align=ft.Alignment.CENTER,
                         ),
                         ft.Dropdown(
                             options=[
@@ -70,7 +70,7 @@ class FirstLaunchBuilder(Builder):
                         ft.Text(
                             localization.choose_currency,
                             size=20,
-                            text_align="center",
+                            text_align=ft.Alignment.CENTER,
                         ),
                         ft.Dropdown(
                             options=[

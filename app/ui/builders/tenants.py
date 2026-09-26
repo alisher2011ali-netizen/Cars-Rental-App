@@ -12,7 +12,7 @@ class TenantBuilder(Builder):
             db = session_factory()
 
         tenants_list = db.scalars(select(Tenant)).all()
-        fab = self._build_fab("/add_tenant", localization.add_tenant)
+        fab = self.build_fab("/add_tenant", localization.add_tenant)
         title = ft.AppBar(
             leading=ft.Icon(
                 icon=ft.Icons.PERSON,
@@ -21,13 +21,13 @@ class TenantBuilder(Builder):
             ),
             title=ft.Text(
                 localization.tenants,
-                size=24,
-                weight="bold",
+                size=30,
+                weight=ft.FontWeight.BOLD,
             ),
         )
 
         if not tenants_list:
-            return self._build_not_data_view(
+            return self.build_not_data_view(
                 title=title,
                 icon=ft.Icon(
                     ft.Icons.PERSON,
@@ -44,18 +44,18 @@ class TenantBuilder(Builder):
             )
 
         tenants_content = ft.Column(
-            controls=[title],
+            controls=[],
             expand=True,
         )
 
         for tenant in tenants_list:
-            tenant_card = self._create_tenant_card(tenant)
+            tenant_card = self.create_tenant_card(tenant)
             tenants_content.controls.append(tenant_card)
 
         return ft.View(
             route="/tenants",
-            navigation_bar=self._get_nav_bar(2),
-            controls=[ft.Container(content=tenants_content)],
+            navigation_bar=self.get_nav_bar(2),
+            controls=[title, ft.Container(content=tenants_content)],
             floating_action_button=fab,
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
@@ -117,7 +117,7 @@ class TenantBuilder(Builder):
                         db=db,
                     )
 
-            self._build_complete_snack_bar()
+            self.build_complete_snack_bar()
             await self.page.push_route("/tenants")
 
         name_input = ft.TextField(label=localization.fullname, width=300)
@@ -127,7 +127,9 @@ class TenantBuilder(Builder):
         input = ft.Container(
             content=ft.Column(
                 [
-                    ft.Text(localization.new_tenant, size=24, weight="bold"),
+                    ft.Text(
+                        localization.new_tenant, size=24, weight=ft.FontWeight.BOLD
+                    ),
                     name_input,
                     phone_input,
                     debt_sum_input,
@@ -175,6 +177,6 @@ class TenantBuilder(Builder):
 
         return ft.View(
             route="/add_tenant",
-            navigation_bar=self._get_nav_bar(2),
+            navigation_bar=self.get_nav_bar(2),
             controls=[input],
         )

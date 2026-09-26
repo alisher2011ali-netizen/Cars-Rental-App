@@ -14,7 +14,7 @@ class Builder:
         self.connector = Connector()
         self.current_image_indices = {}
 
-    def _get_nav_bar(self, current_index: int):
+    def get_nav_bar(self, current_index: int):
         return ft.NavigationBar(
             destinations=[
                 ft.NavigationBarDestination(
@@ -51,7 +51,7 @@ class Builder:
             case 4:
                 await self.page.push_route("/finances")
 
-    def _create_car_card(
+    def create_car_card(
         self, car: Car, car_images: list[str] | None = None
     ) -> ft.Container:
         car_images = car_images or []
@@ -60,44 +60,117 @@ class Builder:
         async def go_to_details(e):
             await self.page.push_route(f"/cars/{car.id}")
 
+        # Стилизованный номерной знак
+        plate_badge = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Text(
+                        car.plate_number.upper(),
+                        size=14,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.BLACK,
+                    ),
+                    ft.Container(
+                        width=1,
+                        height=16,
+                        bgcolor=ft.Colors.BLACK54,
+                    ),
+                    ft.Column(
+                        [
+                            ft.Text(
+                                str(getattr(car, "region_code", "") or "RUS"),
+                                size=10,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.BLACK,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=0,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=6,
+            ),
+            bgcolor=ft.Colors.WHITE,
+            border=ft.border.all(1.5, ft.Colors.BLACK87),
+            border_radius=4,
+            padding=ft.padding.symmetric(horizontal=8, vertical=2),
+        )
+
         if car_images:
             indicator = ft.Text(
                 f"1/{len(car_images)}",
                 size=12,
-                weight="bold",
+                weight=ft.FontWeight.BOLD,
                 color=ft.Colors.ON_SURFACE_VARIANT,
             )
 
+            # Контейнер 4:3 с заполнением по ширине
             image_container = ft.Container(
-                content=ft.Image(src=car_images[0]),
-                width=300,
-                height=200,
+                content=ft.Image(
+                    src=car_images[0],
+                    fit=ft.BoxFit.COVER,
+                ),
+                aspect_ratio=4 / 3,
                 border_radius=8,
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
             )
 
+            drag_state = {"accumulated_delta": 0.0, "swiped": False}
+            threshold = 40.0
+
+            def on_horizontal_drag_start(e: ft.DragStartEvent):
+                drag_state["accumulated_delta"] = 0.0
+                drag_state["swiped"] = False
+
             def on_horizontal_drag_update(e: ft.DragUpdateEvent):
-                if e.primary_delta > 50:
+                if drag_state["swiped"]:
+                    return
+
+                drag_state["accumulated_delta"] += e.primary_delta or 0.0
+
+                if drag_state["accumulated_delta"] > threshold:
                     self._prev_image(car.id, car_images, image_container, indicator)
-                elif e.primary_delta < -50:
+                    drag_state["swiped"] = True
+                elif drag_state["accumulated_delta"] < -threshold:
                     self._next_image(car.id, car_images, image_container, indicator)
+                    drag_state["swiped"] = True
+
+            def on_horizontal_drag_end(e: ft.DragEndEvent):
+                drag_state["accumulated_delta"] = 0.0
+                drag_state["swiped"] = False
 
             image_with_swipe = ft.GestureDetector(
                 content=image_container,
+                on_horizontal_drag_start=on_horizontal_drag_start,
                 on_horizontal_drag_update=on_horizontal_drag_update,
+                on_horizontal_drag_end=on_horizontal_drag_end,
                 on_tap=go_to_details,
             )
 
         else:
             image_container = ft.Container(
-                content=ft.Text(
-                    localization.no_images,
-                    size=14,
-                    weight="bold",
-                    color=ft.Colors.ON_SURFACE_VARIANT,
+                content=ft.Column(
+                    [
+                        ft.Icon(
+                            ft.Icons.DIRECTIONS_CAR,
+                            size=48,
+                            color=ft.Colors.ON_SURFACE_VARIANT,
+                        ),
+                        ft.Text(
+                            localization.no_images,
+                            size=14,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.ON_SURFACE_VARIANT,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=6,
                 ),
-                width=300,
-                height=200,
-                bgcolor=ft.Colors.SURFACE_CONTAINER,
+                aspect_ratio=4 / 3,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGH,
                 alignment=ft.Alignment.CENTER,
                 border_radius=8,
             )
@@ -110,65 +183,39 @@ class Builder:
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Text(
-                        f"{car.brand} {car.model} ({car.plate_number})",
-                        size=16,
-                        weight="bold",
-                        color=ft.Colors.ON_SURFACE_VARIANT,
+                    # Верхняя строка: марка + модель и рядом стилизованный номер
+                    ft.Row(
+                        [
+                            ft.Text(
+                                f"{car.brand} {car.model}",
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.ON_SURFACE,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                                expand=True,
+                            ),
+                            plate_badge,
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                     image_with_swipe,
-                    indicator,
+                    # Подвал карточки: индикатор по центру
+                    ft.Row(
+                        [indicator],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
                 ],
-                alignment=ft.Alignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=10,
+                spacing=8,
             ),
-            padding=15,
+            margin=ft.margin.symmetric(horizontal=8, vertical=4),
+            padding=12,
             border_radius=12,
             bgcolor=ft.Colors.SURFACE_CONTAINER,
             on_click=go_to_details,
         )
 
-    def _next_image(
-        self,
-        car_id: int,
-        images: list[str],
-        image_container: ft.Container,
-        indicator: ft.Text,
-    ):
-        if not images:
-            return
-
-        current = self.current_image_indices.get(car_id, 0)
-
-        if current < len(images) - 1:
-            self.current_image_indices[car_id] = current + 1
-            image_container.content.src = images[current + 1]
-            image_container.update()
-
-            indicator.value = f"{current + 2}/{len(images)}"
-            indicator.update()
-
-    def _prev_image(
-        self,
-        car_id: int,
-        images: list[str],
-        image_container: ft.Container,
-        indicator: ft.Text,
-    ):
-        if not images:
-            return
-
-        current = self.current_image_indices.get(car_id, 0)
-        if current > 0:
-            self.current_image_indices[car_id] = current - 1
-            image_container.content.src = images[current - 1]
-            image_container.update()
-
-            indicator.value = f"{current}/{len(images)}"
-            indicator.update()
-
-    def _build_complete_snack_bar(self) -> ft.SnackBar:
+    def build_complete_snack_bar(self) -> ft.SnackBar:
         return ft.SnackBar(
             content=ft.Text(localization.added_successfully),
             action=ft.SnackBarAction(label="OK"),
@@ -176,7 +223,7 @@ class Builder:
             open=True,
         )
 
-    def _build_not_data_view(
+    def build_not_data_view(
         self,
         title: ft.Control,
         icon: ft.Icon,
@@ -189,7 +236,7 @@ class Builder:
     ) -> ft.Container:
         return ft.View(
             route=route,
-            navigation_bar=self._get_nav_bar(nav_bar_idx),
+            navigation_bar=self.get_nav_bar(nav_bar_idx),
             controls=[
                 ft.Container(
                     content=ft.Column(
@@ -202,7 +249,7 @@ class Builder:
                                         ft.Text(
                                             text,
                                             size=18,
-                                            weight="bold",
+                                            weight=ft.FontWeight.BOLD,
                                             color=ft.Colors.ON_SURFACE_VARIANT,
                                             align=ft.Alignment.CENTER,
                                         ),
@@ -228,14 +275,14 @@ class Builder:
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def _build_fab(self, route: str, text: str) -> ft.FloatingActionButton:
+    def build_fab(self, route: str, text: str) -> ft.FloatingActionButton:
         return ft.FloatingActionButton(
             icon=ft.Icons.ADD,
             on_click=lambda _: self.page.run_task(self.page.push_route, route),
             tooltip=ft.Tooltip(text),
         )
 
-    def _create_tenant_card(self, tenant: Tenant) -> ft.Container:
+    def create_tenant_card(self, tenant: Tenant) -> ft.Container:
         def on_phone_number_tap(tenant_phone: str):
             self.page.clipboard.set(tenant_phone)
             snack = ft.SnackBar(localization.copied, open=True)
@@ -266,7 +313,7 @@ class Builder:
                                         ft.Text(
                                             tenant.name[:20],
                                             size=20,
-                                            weight="bold",
+                                            weight=ft.FontWeight.BOLD,
                                             width=200,
                                         ),
                                         ft.Text(
@@ -445,7 +492,7 @@ class Builder:
             border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
         )
 
-    def _create_rental_card(rental: Rental) -> ft.Container:
+    def create_rental_card(rental: Rental) -> ft.Container:
         match rental.status.value:
             case "active":
                 status_text = localization.active
@@ -467,7 +514,7 @@ class Builder:
                         f"{localization.status}: {status_text}",
                         size=16,
                         color=status_color,
-                        weight="bold",
+                        weight=ft.FontWeight.BOLD,
                     ),
                     ft.Text(
                         f"{localization.car}: {rental.car.brand} {rental.car.model} ({rental.car.plate_number})",
