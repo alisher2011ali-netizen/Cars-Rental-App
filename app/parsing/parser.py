@@ -14,7 +14,7 @@ def process_sber_pdf(input_pdf_path: str) -> list[dict]:
         list[dict]: A list of parsed transaction dictionaries.
     """
     if not input_pdf_path.lower().endswith(".pdf"):
-        raise ValueError("Файл должен быть в формате PDF")
+        raise ValueError("File must be in PDF format")
 
     tmp_txt_file_name = input_pdf_path.replace(".pdf", ".txt")
 

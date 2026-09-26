@@ -599,7 +599,7 @@ class Builder:
                                         color=ft.Colors.ON_SECONDARY_CONTAINER,
                                     ),
                                     ft.Text(
-                                        "Сбербанк",
+                                        localization.sberbank,
                                         size=12,
                                         color=ft.Colors.ON_SECONDARY_CONTAINER,
                                     ),
@@ -610,7 +610,7 @@ class Builder:
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     ),
                     ft.Text(
-                        payment.description or "Без описания",
+                        payment.description or localization.no_description,
                         size=14,
                         max_lines=2,
                         overflow=ft.TextOverflow.ELLIPSIS,
@@ -681,7 +681,7 @@ class Builder:
                         size=14,
                     ),
                     ft.Text(
-                        f"{localization.income_in_total}: {rental.total_cost} руб."
+                        f"{localization.income_in_total}: {rental.total_cost} {localization.currency}"
                     ),
                     ft.Text(
                         f"{localization.start}: {rental.start_date}",

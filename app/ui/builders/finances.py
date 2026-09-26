@@ -61,7 +61,7 @@ class FinanceBuilder(Builder):
                 await self.page.push_route("/finances")
 
         upload_button = ft.Button(
-            "Загрузить выписку",
+            localization.upload_statement,
             icon=ft.Icons.UPLOAD_FILE,
             on_click=pick_pdf_click,
             align=ft.Alignment.TOP_RIGHT,

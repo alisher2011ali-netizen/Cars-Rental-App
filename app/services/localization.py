@@ -1,6 +1,9 @@
 import json
+import logging
 import os
 from typing import Any
+
+logger = logging.getLogger()
 
 
 class Localization:
@@ -40,13 +43,11 @@ class Localization:
             current_dir, "..", "assets", "locales", f"{lang_code}.json"
         )
 
-        print(f"DEBUG: Ищу файл перевода по пути: {file_path}")
-
         if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as f:
                 self.strings = json.load(f)
         else:
-            print(
+            logger.warning(
                 f"⚠ Localization file for '{lang_code}' not found. Using empty strings."
             )
             self.strings = {}

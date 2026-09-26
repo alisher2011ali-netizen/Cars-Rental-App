@@ -24,7 +24,7 @@ class RentalBuilder(Builder):
             db = session_factory()
 
         rentals_list = db.scalars(select(Rental)).all()
-        fab = self.build_fab("/add_rental", "Добавить аренду")
+        fab = self.build_fab("/add_rental", localization.add_rental)
         title = ft.AppBar(
             leading=ft.Icon(
                 icon=ft.Icons.KEY,
@@ -152,22 +152,26 @@ class RentalBuilder(Builder):
             on_select=on_tenant_select,
         )
 
-        dates_info_text = ft.Text("Срок: 0 дней", size=16, weight=ft.FontWeight.BOLD)
+        dates_info_text = ft.Text(
+            f"{localization.term}: 0 {localization.days}",
+            size=16,
+            weight=ft.FontWeight.BOLD,
+        )
         total_price_text = ft.Text(
-            f"{localization.total_to_be_paid}: 0 руб.",
+            f"{localization.total_to_be_paid}: 0 {localization.currency}",
             size=20,
             weight=ft.FontWeight.BOLD,
             color=ft.Colors.GREEN_700,
         )
 
         period_field = ft.TextField(
-            label="Период платежа",
+            label=localization.payment_period,
             keyboard_type=ft.KeyboardType.NUMBER,
             on_change=lambda _: recalculate_total(),
         )
 
         error_text = ft.Text(
-            value="Неправильный ввод! Только числа больше нуля",
+            value=localization.invalid_input_greater_than_zero,
             color=ft.Colors.RED,
             size=14,
             visible=False,
@@ -176,7 +180,7 @@ class RentalBuilder(Builder):
         period_column = ft.Column([period_field, error_text], spacing=5, visible=False)
 
         price_field = ft.TextField(
-            label="Стоимость за неделю",
+            label=localization.cost_per_week,
             value="0",
             keyboard_type=ft.KeyboardType.NUMBER,
             width=400,
@@ -233,7 +237,7 @@ class RentalBuilder(Builder):
                 weeks = difference.days // 7
                 end_date = start_date + timedelta(weeks=weeks)
                 total_amount = entered_price * weeks
-                dates_info_text.value = f"Срок: {weeks} нед. ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
+                dates_info_text.value = f"{localization.term}: {weeks} {localization.weeks_short} ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
 
             elif tariff == "monthly":
                 start_date = start_picker.value
@@ -242,11 +246,11 @@ class RentalBuilder(Builder):
                 months = difference.days // 30
                 end_date = start_date + timedelta(days=months * 30)
                 total_amount = entered_price * months
-                dates_info_text.value = f"Срок: {months} мес. ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
+                dates_info_text.value = f"{localization.term}: {months} {localization.months_short} ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
 
             elif tariff == "custom":
                 if not period_field.value:
-                    dates_info_text.value = "Введите период"
+                    dates_info_text.value = localization.enter_period
                 elif not period_field.value.isdigit() or int(period_field.value) <= 0:
                     error_text.visible = True
                     error_text.update()
@@ -260,11 +264,9 @@ class RentalBuilder(Builder):
                     end_date = start_date + timedelta(days=periods_count * period)
                     total_amount = entered_price * periods_count
 
-                    dates_info_text.value = f"Срок: {periods_count} раз(а) по {period} дн. ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
+                    dates_info_text.value = f"{localization.term}: {periods_count} {localization.times_by} {period} {localization.days_short} ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
 
-            total_price_text.value = (
-                f"{localization.total_to_be_paid}: {total_amount:.2f} руб."
-            )
+            total_price_text.value = f"{localization.total_to_be_paid}: {total_amount:.2f} {localization.currency}"
 
             error_text.update()
             dates_info_text.update()
@@ -281,13 +283,13 @@ class RentalBuilder(Builder):
             """
             tariff = e.control.value
             if tariff == "weekly":
-                price_field.label = "Стоимость за неделю"
+                price_field.label = localization.cost_per_week
                 period_column.visible = False
             elif tariff == "monthly":
-                price_field.label = "Стоимость за месяц"
+                price_field.label = localization.cost_per_month
                 period_column.visible = False
             elif tariff == "custom":
-                price_field.label = "Стоимость за период"
+                price_field.label = localization.cost_per_period
                 period_column.visible = True
 
             price_field.update()
@@ -317,7 +319,7 @@ class RentalBuilder(Builder):
                 None: Commits record to database and navigates back to the inventory list.
             """
 
-        # TODO: сделать сохранение аренды в бд
+        # TODO: save rental to database
 
         save_button = ft.Button(
             localization.save, icon=ft.Icons.SAVE, on_click=on_click_save

@@ -148,7 +148,7 @@ class CarBuilder(Builder):
         year_input = ft.TextField(label=localization.year_of_production, width=300)
         plate_num_input = ft.TextField(label=localization.plate_number, width=150)
         region_code_input = ft.TextField(
-            label="Регион",
+            label=localization.region,
             width=100,
         )
         num_input_row = ft.Row([plate_num_input, region_code_input])
@@ -208,10 +208,10 @@ class CarBuilder(Builder):
             return ft.View(
                 route=f"/cars/{car_id}",
                 controls=[
-                    ft.AppBar(title=ft.Text("Ошибка")),
-                    ft.Text("Автомобиль не найден", color=ft.Colors.ERROR),
+                    ft.AppBar(title=ft.Text(localization.error)),
+                    ft.Text(localization.car_not_found, color=ft.Colors.ERROR),
                     ft.Button(
-                        "Назад",
+                        localization.back,
                         icon=ft.Icons.ARROW_BACK,
                         on_click=self.page.run_task(self.page.push_route, "/"),
                         align=ft.Alignment.CENTER,
@@ -395,23 +395,27 @@ class CarBuilder(Builder):
                 )
         else:
             images_row.controls.append(
-                ft.Text("Нет фото", color=ft.Colors.ON_SURFACE_VARIANT)
+                ft.Text(localization.no_photo, color=ft.Colors.ON_SURFACE_VARIANT)
             )
 
         add_photo_btn = ft.Button(
-            "Добавить фото",
+            localization.add_photo,
             icon=ft.Icons.ADD,
         )
 
         car_info = ft.Column(
             [
                 ft.Text(f"{car.brand} {car.model}", size=24, weight=ft.FontWeight.BOLD),
-                ft.Text(f"Год выпуска: {car.year}", size=16),
-                ft.Text(f"Гос. номер: {car.plate_number}", size=16),
+                ft.Text(f"{localization.year_of_production}: {car.year}", size=16),
+                ft.Text(f"{localization.plate_number}: {car.plate_number}", size=16),
                 ft.Text(
-                    f"Статус: {localization.__getattr__(car.status.value)}", size=16
+                    f"{localization.status}: {localization.__getattr__(car.status.value)}",
+                    size=16,
                 ),
-                ft.Text(f"Заметки: {car.notes or 'Без заметок'}", size=16),
+                ft.Text(
+                    f"{localization.notes}: {car.notes or localization.no_notes}",
+                    size=16,
+                ),
             ],
             spacing=5,
         )
@@ -421,7 +425,7 @@ class CarBuilder(Builder):
             # Select the most recent lease chronologically assuming list preserves append order
             active_rental = car.rentals[-1]
             active_rental_btn = ft.Button(
-                f"Текущая аренда #{active_rental.id}",
+                f"{localization.current_rental} #{active_rental.id}",
                 icon=ft.Icons.KEY,
                 on_click=lambda _: self.page.run_task(
                     self.page.push_route, f"/rentals/{active_rental.id}"
@@ -433,7 +437,7 @@ class CarBuilder(Builder):
             route=f"/cars/{car_id}",
             controls=[
                 ft.AppBar(
-                    title=ft.Text(f"Детали авто #{car_id}"),
+                    title=ft.Text(f"{localization.car_details} #{car_id}"),
                     leading=ft.IconButton(
                         ft.Icons.ARROW_BACK,
                         on_click=lambda _: self.page.run_task(

@@ -34,7 +34,7 @@ def parse_sber_text_to_dict(
                 extractor_type = extractor
                 break
         else:
-            raise exceptions.UserInputError(f"Задан неизвестный формат {format}")
+            raise exceptions.UserInputError(f"Unknown format specified: {format}")
 
     actual_extractor: Extractor = extractor_type(file_text)
 
