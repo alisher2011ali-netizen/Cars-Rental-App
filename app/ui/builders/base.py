@@ -135,9 +135,9 @@ class Builder:
                 spacing=6,
             ),
             bgcolor=ft.Colors.WHITE,
-            border=ft.border.all(1.5, ft.Colors.BLACK87),
+            border=ft.Border.all(1.5, ft.Colors.BLACK87),
             border_radius=4,
-            padding=ft.padding.symmetric(horizontal=8, vertical=2),
+            padding=ft.Padding.symmetric(horizontal=8, vertical=2),
         )
 
         if car_images:
@@ -272,12 +272,51 @@ class Builder:
                 ],
                 spacing=8,
             ),
-            margin=ft.margin.symmetric(horizontal=8, vertical=4),
+            margin=ft.Margin.symmetric(horizontal=8, vertical=4),
             padding=12,
             border_radius=12,
             bgcolor=ft.Colors.SURFACE_CONTAINER,
             on_click=go_to_details,
         )
+
+    def _next_image(
+        self,
+        car_id: int,
+        images: list[str],
+        image_container: ft.Container,
+        indicator: ft.Text,
+    ):
+        if not images:
+            return
+
+        current = self.current_image_indices.get(car_id, 0)
+
+        if current < len(images) - 1:
+            self.current_image_indices[car_id] = current + 1
+            image_container.content.src = images[current + 1]
+            image_container.update()
+
+            indicator.value = f"{current + 2}/{len(images)}"
+            indicator.update()
+
+    def _prev_image(
+        self,
+        car_id: int,
+        images: list[str],
+        image_container: ft.Container,
+        indicator: ft.Text,
+    ):
+        if not images:
+            return
+
+        current = self.current_image_indices.get(car_id, 0)
+        if current > 0:
+            self.current_image_indices[car_id] = current - 1
+            image_container.content.src = images[current - 1]
+            image_container.update()
+
+            indicator.value = f"{current}/{len(images)}"
+            indicator.update()
 
     def build_complete_snack_bar(self) -> ft.SnackBar:
         """Construct a standardized success notification snackbar.
