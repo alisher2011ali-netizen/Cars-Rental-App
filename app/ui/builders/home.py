@@ -8,11 +8,10 @@ class HomeBuilder(Builder):
         last_added_cars, images_dict = self.connector.get_last_added_cars()
 
         title = ft.AppBar(
-            ft.Text(
+            title=ft.Text(
                 localization.app_name,
-                size=28,
+                size=40,
                 weight="bold",
-                color=ft.Colors.ON_SURFACE_VARIANT,
             )
         )
 

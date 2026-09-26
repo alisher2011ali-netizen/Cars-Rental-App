@@ -18,14 +18,13 @@ class RentalBuilder(Builder):
         title = ft.AppBar(
             leading=ft.Icon(
                 icon=ft.Icons.KEY,
-                size=28,
+                size=40,
                 color=ft.Colors.ON_SURFACE_VARIANT,
             ),
             title=ft.Text(
                 localization.rentals,
                 size=24,
                 weight="bold",
-                color=ft.Colors.ON_SURFACE_VARIANT,
             ),
         )
 

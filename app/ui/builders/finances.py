@@ -14,12 +14,12 @@ class FinanceBuilder(Builder):
         payments_list = db.scalars(select(Payment)).all()
         title = ft.AppBar(
             leading=ft.Icon(
-                icon=ft.Icons.ATTACH_MONEY_OUTLINED,
-                size=28,
+                icon=ft.Icons.ATTACH_MONEY,
+                size=40,
                 color=ft.Colors.ON_SURFACE_VARIANT,
             ),
             title=ft.Text(
-                f"💰 {localization.finances}",
+                localization.finances,
                 size=24,
                 weight="bold",
                 color=ft.Colors.ON_SURFACE_VARIANT,
@@ -72,133 +72,8 @@ class FinanceBuilder(Builder):
         )
 
         for payment in payments_list:
-            payment_type = "+" if payment.type == PaymentType.income else "-"
-
-            text_color = (
-                ft.Colors.PRIMARY
-                if payment.type == PaymentType.income
-                else ft.Colors.ERROR
-            )
-
-            formatted_amount = f"{abs(payment.amount):.2f}".rstrip("0").rstrip(".")
-
-            if not payment.is_parsed:
-                payment_card = ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Row(
-                                [
-                                    ft.Row(
-                                        [
-                                            ft.Text(
-                                                f"{payment_type}{formatted_amount}",
-                                                size=16,
-                                                weight=ft.FontWeight.BOLD,
-                                                color=text_color,
-                                            ),
-                                            ft.Text(
-                                                localization.currency,
-                                                size=14,
-                                                color=ft.Colors.ON_SURFACE_VARIANT,
-                                            ),
-                                        ],
-                                        spacing=5,
-                                    ),
-                                ],
-                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            ),
-                            ft.Text(
-                                f"{localization.notes}:\n{payment.notes}",
-                                size=14,
-                                color=ft.Colors.ON_SURFACE_VARIANT,
-                            ),
-                        ],
-                        spacing=5,
-                    ),
-                    bgcolor=ft.Colors.SECONDARY_CONTAINER,
-                    padding=10,
-                    border_radius=8,
-                    border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
-                )
-                payments_content.content.controls.append(payment_card)
-
-            elif payment.is_parsed:
-                op_date_str = (
-                    payment.operation_date.strftime("%d.%m.%Y %H:%M")
-                    if payment.operation_date
-                    else ""
-                )
-
-                payment_card = ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Row(
-                                [
-                                    ft.Row(
-                                        [
-                                            ft.Text(
-                                                f"{payment_type}{formatted_amount}",
-                                                size=16,
-                                                weight=ft.FontWeight.BOLD,
-                                                color=text_color,
-                                            ),
-                                            ft.Text(
-                                                localization.currency,
-                                                size=14,
-                                                color=ft.Colors.ON_SECONDARY_CONTAINER,
-                                            ),
-                                        ],
-                                        spacing=5,
-                                    ),
-                                    ft.Row(
-                                        [
-                                            ft.Icon(
-                                                ft.Icons.ACCOUNT_BALANCE,
-                                                size=14,
-                                                color=ft.Colors.ON_SECONDARY_CONTAINER,
-                                            ),
-                                            ft.Text(
-                                                "Сбербанк",
-                                                size=12,
-                                                color=ft.Colors.ON_SECONDARY_CONTAINER,
-                                            ),
-                                        ],
-                                        spacing=2,
-                                    ),
-                                ],
-                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            ),
-                            ft.Text(
-                                payment.description or "Без описания",
-                                size=14,
-                                max_lines=2,
-                                overflow=ft.TextOverflow.ELLIPSIS,
-                                color=ft.Colors.ON_SECONDARY_CONTAINER,
-                            ),
-                            ft.Row(
-                                [
-                                    ft.Text(
-                                        payment.category or "",
-                                        size=12,
-                                        color=ft.Colors.ON_SURFACE_VARIANT,
-                                    ),
-                                    ft.Text(
-                                        op_date_str,
-                                        size=12,
-                                        color=ft.Colors.ON_SURFACE_VARIANT,
-                                    ),
-                                ],
-                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            ),
-                        ],
-                        spacing=5,
-                    ),
-                    bgcolor=ft.Colors.SECONDARY_CONTAINER,
-                    padding=10,
-                    border_radius=8,
-                    border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
-                )
-                payments_content.content.controls.append(payment_card)
+            payment_card = self.create_payment_card(payment)
+            payments_content.content.controls.append(payment_card)
 
         return ft.View(
             route="/finances",

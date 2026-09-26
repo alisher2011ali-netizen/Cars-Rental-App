@@ -13,19 +13,17 @@ class TenantBuilder(Builder):
 
         tenants_list = db.scalars(select(Tenant)).all()
         fab = self._build_fab("/add_tenant", localization.add_tenant)
-        title = ft.Row(
-            [
-                ft.Icon(
-                    icon=ft.Icons.PERSON,
-                    size=28,
-                    color=ft.Colors.ON_SURFACE_VARIANT,
-                ),
-                ft.Text(
-                    localization.tenants,
-                    size=24,
-                    weight="bold",
-                ),
-            ],
+        title = ft.AppBar(
+            leading=ft.Icon(
+                icon=ft.Icons.PERSON,
+                size=40,
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            ),
+            title=ft.Text(
+                localization.tenants,
+                size=24,
+                weight="bold",
+            ),
         )
 
         if not tenants_list:

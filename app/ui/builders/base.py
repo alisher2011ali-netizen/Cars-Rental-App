@@ -1,5 +1,5 @@
 import flet as ft
-from core.models import Car, Tenant
+from core.models import Car, Payment, PaymentType, Rental, Tenant
 from services.connector import Connector
 from services.localization import localization
 
@@ -30,7 +30,7 @@ class Builder:
                     icon=ft.Icons.KEY, label=localization.rentals
                 ),
                 ft.NavigationBarDestination(
-                    icon=ft.Icons.ATTACH_MONEY_OUTLINED,
+                    icon=ft.Icons.ATTACH_MONEY,
                     label=localization.finances,
                 ),
             ],
@@ -107,7 +107,7 @@ class Builder:
             )
             indicator = ft.Text()
 
-        card = ft.Container(
+        return ft.Container(
             content=ft.Column(
                 [
                     ft.Text(
@@ -128,8 +128,6 @@ class Builder:
             bgcolor=ft.Colors.SURFACE_CONTAINER,
             on_click=go_to_details,
         )
-
-        return card
 
     def _next_image(
         self,
@@ -256,7 +254,8 @@ class Builder:
                 radius=65,
                 expand=False,
             )
-        card = ft.Container(
+
+        return ft.Container(
             content=ft.Column(
                 [
                     ft.Row(
@@ -298,4 +297,199 @@ class Builder:
             alignment=ft.Alignment.CENTER_LEFT,
             bgcolor=ft.Colors.GREY_100,
         )
-        return card
+
+    def create_payment_card(self, payment: Payment) -> ft.Container:
+        payment_type = "+" if payment.type == PaymentType.income else "-"
+
+        text_color = (
+            ft.Colors.PRIMARY if payment.type == PaymentType.income else ft.Colors.ERROR
+        )
+
+        formatted_amount = f"{abs(payment.amount):.2f}".rstrip("0").rstrip(".")
+
+        if not payment.is_parsed:
+            payment_card = self._create_not_parsed_payment_card(
+                payment, payment_type, formatted_amount, text_color
+            )
+
+        elif payment.is_parsed:
+            payment_card = self._create_parsed_payment_card(
+                payment, payment_type, formatted_amount, text_color
+            )
+
+        return payment_card
+
+    def _create_not_parsed_payment_card(
+        payment: Payment,
+        payment_type: str,
+        formatted_amount: str,
+        text_color: ft.ColorValue,
+    ) -> ft.Container:
+        return ft.Container(
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Row(
+                                [
+                                    ft.Text(
+                                        f"{payment_type}{formatted_amount}",
+                                        size=16,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=text_color,
+                                    ),
+                                    ft.Text(
+                                        localization.currency,
+                                        size=14,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
+                                ],
+                                spacing=5,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    ft.Text(
+                        f"{localization.notes}:\n{payment.notes}",
+                        size=14,
+                        color=ft.Colors.ON_SURFACE_VARIANT,
+                    ),
+                ],
+                spacing=5,
+            ),
+            bgcolor=ft.Colors.SECONDARY_CONTAINER,
+            padding=10,
+            border_radius=8,
+            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+        )
+
+    def _create_parsed_payment_card(
+        payment: Payment,
+        payment_type: str,
+        formatted_amount: str,
+        text_color: ft.ColorValue,
+    ) -> ft.Container:
+        op_date_str = (
+            payment.operation_date.strftime("%d.%m.%Y %H:%M")
+            if payment.operation_date
+            else ""
+        )
+
+        return ft.Container(
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Row(
+                                [
+                                    ft.Text(
+                                        f"{payment_type}{formatted_amount}",
+                                        size=16,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=text_color,
+                                    ),
+                                    ft.Text(
+                                        localization.currency,
+                                        size=14,
+                                        color=ft.Colors.ON_SECONDARY_CONTAINER,
+                                    ),
+                                ],
+                                spacing=5,
+                            ),
+                            ft.Row(
+                                [
+                                    ft.Icon(
+                                        ft.Icons.ACCOUNT_BALANCE,
+                                        size=14,
+                                        color=ft.Colors.ON_SECONDARY_CONTAINER,
+                                    ),
+                                    ft.Text(
+                                        "Сбербанк",
+                                        size=12,
+                                        color=ft.Colors.ON_SECONDARY_CONTAINER,
+                                    ),
+                                ],
+                                spacing=2,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    ft.Text(
+                        payment.description or "Без описания",
+                        size=14,
+                        max_lines=2,
+                        overflow=ft.TextOverflow.ELLIPSIS,
+                        color=ft.Colors.ON_SECONDARY_CONTAINER,
+                    ),
+                    ft.Row(
+                        [
+                            ft.Text(
+                                payment.category or "",
+                                size=12,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                            ft.Text(
+                                op_date_str,
+                                size=12,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                ],
+                spacing=5,
+            ),
+            bgcolor=ft.Colors.SECONDARY_CONTAINER,
+            padding=10,
+            border_radius=8,
+            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+        )
+
+    def _create_rental_card(rental: Rental) -> ft.Container:
+        match rental.status.value:
+            case "active":
+                status_text = localization.active
+                status_color = ft.Colors.GREEN_500
+            case "completed":
+                status_text = localization.completed
+                status_color = ft.Colors.BLACK_87
+            case "cancelled":
+                status_text = localization.cancelled
+                status_color = ft.Colors.RED_500
+            case _:
+                status_text = localization.other
+                status_color = ft.Colors.GREY_500
+
+        return ft.Container(
+            content=ft.Column(
+                [
+                    ft.Text(
+                        f"{localization.status}: {status_text}",
+                        size=16,
+                        color=status_color,
+                        weight="bold",
+                    ),
+                    ft.Text(
+                        f"{localization.car}: {rental.car.brand} {rental.car.model} ({rental.car.plate_number})",
+                        size=14,
+                    ),
+                    ft.Text(
+                        f"{localization.tenant}: {rental.tenant.last_name} {rental.tenant.first_name} ({rental.tenant.phone_number})",
+                        size=14,
+                    ),
+                    ft.Text(
+                        f"{localization.income_in_total}: {rental.total_cost} руб."
+                    ),
+                    ft.Text(
+                        f"{localization.start}: {rental.start_date}",
+                        size=14,
+                    ),
+                    ft.Text(f"{localization.end}: {rental.end_date}", size=14),
+                ],
+                spacing=5,
+            ),
+            padding=15,
+            border_radius=12,
+            bgcolor=ft.Colors.GREY_100,
+            shadow=True,
+        )

@@ -16,7 +16,7 @@ class CarBuilder(Builder):
         title = ft.AppBar(
             leading=ft.Icon(
                 icon=ft.Icons.DIRECTIONS_CAR,
-                size=28,
+                size=40,
                 color=ft.Colors.ON_SURFACE_VARIANT,
             ),
             title=ft.Text(
@@ -115,10 +115,10 @@ class CarBuilder(Builder):
         brand_input = ft.TextField(label=localization.brand, width=300)
         model_input = ft.TextField(label=localization.model, width=300)
         year_input = ft.TextField(label=localization.year_of_production, width=300)
-        plate_num_input = ft.TextField(label=localization.plate_number, width=145)
+        plate_num_input = ft.TextField(label=localization.plate_number, width=150)
         region_code_input = ft.TextField(
             label="Регион",
-            width=145,
+            width=100,
         )
         num_input_row = ft.Row([plate_num_input, region_code_input])
         input = ft.Container(
@@ -312,7 +312,7 @@ class CarBuilder(Builder):
         add_photo_btn = ft.Button(
             "Добавить фото",
             icon=ft.Icons.ADD,
-            # on_click=lambda e: ... (вызов FilePicker)
+            # TODO: on_click=lambda e: ... (вызов FilePicker)
         )
 
         # --- Информационный блок ---
