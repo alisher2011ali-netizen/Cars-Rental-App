@@ -49,34 +49,20 @@ class FinanceBuilder(Builder):
         )
 
         if not payments_list:
-            empty_message = self._build_not_data_container(
-                ft.Icon(
+            return self._build_not_data_view(
+                title=ft.Column([title, upload_button]),
+                icon=ft.Icon(
                     ft.Icons.ATTACH_MONEY,
                     size=60,
                     color=ft.Colors.GREY_400,
                     align=ft.Alignment.CENTER,
                 ),
-                localization.no_operations_history,
-                localization.add_operation,
-                "/add_payment",
-            )
-            return ft.View(
+                text=localization.no_operations_history,
+                button_text=localization.add_operation,
+                button_route="/add_payment",
                 route="/finances",
-                navigation_bar=self._get_nav_bar(4),
-                controls=[
-                    ft.Container(
-                        content=ft.Column(
-                            [
-                                title,
-                                upload_button,
-                                empty_message,
-                            ]
-                        ),
-                        alignment=ft.Alignment.CENTER,
-                    )
-                ],
-                floating_action_button=fab,
-                floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
+                nav_bar_idx=4,
+                fab=fab,
             )
 
         payments_content = ft.Container(

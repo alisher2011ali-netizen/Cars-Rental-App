@@ -30,33 +30,20 @@ class RentalBuilder(Builder):
         )
 
         if not rentals_list:
-            empty_message = self._build_not_data_container(
-                ft.Icon(
+            return self._build_not_data_view(
+                title=title,
+                icon=ft.Icon(
                     ft.Icons.KEY,
                     size=60,
                     color=ft.Colors.GREY_400,
                     align=ft.Alignment.CENTER,
                 ),
-                localization.no_rentals_history,
-                localization.add_rental,
-                "/add_rental",
-            )
-            return ft.View(
-                route="/tenants",
-                navigation_bar=self._get_nav_bar(3),
-                controls=[
-                    ft.Container(
-                        content=ft.Column(
-                            [
-                                title,
-                                empty_message,
-                            ]
-                        ),
-                        alignment=ft.Alignment.CENTER,
-                    )
-                ],
-                floating_action_button=fab,
-                floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
+                text=localization.no_rentals_history,
+                button_text=localization.add_rental,
+                button_route="/add_rental",
+                route="/rental",
+                nav_bar_idx=3,
+                fab=fab,
             )
 
         rentals_content = ft.Container(
@@ -124,7 +111,7 @@ class RentalBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_rental_view(self, db: Session | None) -> ft.View:
+    def build_add_rental_view(self, db: Session | None = None) -> ft.View:
         if db is None:
             db = session_factory()
 

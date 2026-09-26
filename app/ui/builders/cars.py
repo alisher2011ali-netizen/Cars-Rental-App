@@ -27,33 +27,20 @@ class CarBuilder(Builder):
         )
 
         if not cars_list:
-            empty_message = self._build_not_data_container(
-                ft.Icon(
+            return self._build_not_data_view(
+                title=title,
+                icon=ft.Icon(
                     ft.Icons.DIRECTIONS_CAR,
                     size=60,
                     color=ft.Colors.GREY_400,
                     align=ft.Alignment.CENTER,
                 ),
-                localization.no_added_cars,
-                localization.add_car,
-                "/add_car",
-            )
-            return ft.View(
+                text=localization.no_added_cars,
+                button_text=localization.add_car,
+                button_route="/add_car",
                 route="/cars",
-                navigation_bar=self._get_nav_bar(1),
-                controls=[
-                    ft.Container(
-                        content=ft.Column(
-                            [
-                                title,
-                                empty_message,
-                            ]
-                        ),
-                        alignment=ft.Alignment.CENTER,
-                    )
-                ],
-                floating_action_button=fab,
-                floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
+                nav_bar_idx=1,
+                fab=fab,
             )
 
         cars_column = ft.Column(

@@ -1,5 +1,5 @@
 import flet as ft
-from core.models import Car
+from core.models import Car, Tenant
 from services.connector import Connector
 from services.localization import localization
 
@@ -51,7 +51,9 @@ class Builder:
             case 4:
                 await self.page.push_route("/finances")
 
-    def _create_car_card(self, car: Car, car_images: list[str] | None = None):
+    def _create_car_card(
+        self, car: Car, car_images: list[str] | None = None
+    ) -> ft.Container:
         car_images = car_images or []
         self.current_image_indices[car.id] = 0
 
@@ -176,32 +178,56 @@ class Builder:
             open=True,
         )
 
-    def _build_not_data_container(
-        self, icon: ft.Icon, text: str, button_text: str, route: str
+    def _build_not_data_view(
+        self,
+        title: ft.Control,
+        icon: ft.Icon,
+        text: str,
+        button_text: str,
+        button_route: str,
+        route: str,
+        nav_bar_idx: int,
+        fab: ft.FloatingActionButton,
     ) -> ft.Container:
-        return ft.Container(
-            content=ft.Column(
-                [
-                    icon,
-                    ft.Text(
-                        text,
-                        size=18,
-                        weight="bold",
-                        color=ft.Colors.ON_SURFACE_VARIANT,
-                        align=ft.Alignment.CENTER,
+        return ft.View(
+            route=route,
+            navigation_bar=self._get_nav_bar(nav_bar_idx),
+            controls=[
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            title,
+                            ft.Container(
+                                content=ft.Column(
+                                    [
+                                        icon,
+                                        ft.Text(
+                                            text,
+                                            size=18,
+                                            weight="bold",
+                                            color=ft.Colors.ON_SURFACE_VARIANT,
+                                            align=ft.Alignment.CENTER,
+                                        ),
+                                        ft.TextButton(
+                                            button_text,
+                                            icon=ft.Icons.ADD,
+                                            on_click=lambda _: self.page.run_task(
+                                                self.page.push_route, button_route
+                                            ),
+                                            align=ft.Alignment.CENTER,
+                                        ),
+                                    ],
+                                ),
+                                padding=40,
+                                alignment=ft.Alignment.CENTER,
+                            ),
+                        ]
                     ),
-                    ft.TextButton(
-                        button_text,
-                        icon=ft.Icons.ADD,
-                        on_click=lambda _: self.page.run_task(
-                            self.page.push_route, route
-                        ),
-                        align=ft.Alignment.CENTER,
-                    ),
-                ],
-            ),
-            padding=40,
-            alignment=ft.Alignment.CENTER,
+                    alignment=ft.Alignment.CENTER,
+                ),
+            ],
+            floating_action_button=fab,
+            floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
     def _build_fab(self, route: str, text: str) -> ft.FloatingActionButton:
@@ -211,34 +237,65 @@ class Builder:
             tooltip=ft.Tooltip(text),
         )
 
-    def _build_placeholder_view(
-        self,
-        route: str,
-        title: str,
-        description: str,
-        nav_index: int,
-    ) -> ft.View:
-        content = ft.Column(
-            [
-                ft.Text(title, size=24, weight="bold"),
-                ft.Text(description, size=16, color=ft.Colors.GREY_700),
-            ],
-            alignment=ft.Alignment.CENTER,
-            horizontal_alignment=ft.Alignment.CENTER,
-            spacing=20,
-        )
+    def _create_tenant_card(self, tenant: Tenant) -> ft.Container:
+        def on_phone_number_tap(tenant_phone: str):
+            self.page.clipboard.set(tenant_phone)
+            snack = ft.SnackBar(localization.copied, open=True)
+            self.page.overlay.append(snack)
 
-        return ft.View(
-            route=route,
-            navigation_bar=self._get_nav_bar(nav_index),
-            controls=[
-                ft.Container(
-                    content=content,
-                    padding=40,
-                    bgcolor=ft.Colors.WHITE,
-                    width=self.page.width,
-                    height=self.page.height - 80,
-                    alignment=ft.Alignment.CENTER,
-                )
-            ],
+        if not tenant.avatar:
+            avatar = ft.CircleAvatar(
+                content=ft.Text(tenant.name[0].upper(), size=50, color=ft.Colors.WHITE),
+                bgcolor=ft.Colors.BLUE_GREY_400,
+                radius=65,
+                expand=False,
+            )
+        else:
+            avatar = ft.CircleAvatar(
+                content=ft.Image(src=tenant.avatar.path, align=ft.Alignment.CENTER),
+                radius=65,
+                expand=False,
+            )
+        card = ft.Container(
+            content=ft.Column(
+                [
+                    ft.Row(
+                        controls=[
+                            ft.Container(
+                                ft.Column(
+                                    [
+                                        ft.Text(
+                                            tenant.name[:20],
+                                            size=20,
+                                            weight="bold",
+                                            width=200,
+                                        ),
+                                        ft.Text(
+                                            tenant.phone_number,
+                                            size=20,
+                                            on_tap=lambda _, phone_number=tenant.phone_number: (
+                                                on_phone_number_tap(phone_number)
+                                            ),
+                                        ),
+                                        ft.TextButton(
+                                            ft.Text(localization.details, size=16),
+                                            on_click=lambda _, t_id: self.page.run_task(
+                                                self.page.push_route,
+                                                f"/tenants/{t_id}",
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ),
+                            avatar,
+                        ],
+                        alignment=ft.MainAxisAlignment.START,
+                    )
+                ],
+                spacing=5,
+            ),
+            padding=10,
+            alignment=ft.Alignment.CENTER_LEFT,
+            bgcolor=ft.Colors.GREY_100,
         )
+        return card
