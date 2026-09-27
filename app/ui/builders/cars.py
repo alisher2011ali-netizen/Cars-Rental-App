@@ -377,15 +377,15 @@ class CarBuilder(Builder):
             gallery_overlay.visible = True
             self.page.update()
 
-        images_row = ft.Row(scroll=ft.ScrollMode.AUTO, spacing=10)
+        images_row = ft.Row(scroll=ft.ScrollMode.HIDDEN, spacing=10)
         if car_images:
             for i, img in enumerate(car_images):
                 images_row.controls.append(
                     ft.GestureDetector(
                         content=ft.Image(
                             src=img.path,
-                            width=120,
-                            height=120,
+                            width=266,
+                            height=200,
                             fit=ft.BoxFit.COVER,
                             border_radius=8,
                         ),

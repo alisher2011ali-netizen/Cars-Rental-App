@@ -409,7 +409,7 @@ class TenantBuilder(Builder):
             self.page.update()
 
         # --- 3. Информация о водителе ---
-        def copy_phone(_) -> None:
+        def copy_phone(e) -> None:
             self.page.clipboard.set(tenant.phone_number)
             snack = ft.SnackBar(ft.Text(localization.copied), open=True)
             self.page.overlay.append(snack)

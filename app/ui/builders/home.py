@@ -58,10 +58,11 @@ class HomeBuilder(Builder):
                 route="/",
                 navigation_bar=self.get_nav_bar(0),
                 controls=[
+                    title,
                     ft.Container(
                         content=content,
                         padding=5,
-                    )
+                    ),
                 ],
             )
 
@@ -87,7 +88,6 @@ class HomeBuilder(Builder):
 
         content = ft.Column(
             [
-                title,
                 subtitle,
                 cars_column,
             ],
