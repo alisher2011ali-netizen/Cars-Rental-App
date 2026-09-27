@@ -54,8 +54,8 @@ class CarBuilder(Builder):
             )
 
         cars_column = ft.Column(
-            spacing=20,
-            horizontal_alignment=ft.Alignment.CENTER,
+            spacing=10,
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
             alignment=ft.Alignment.CENTER,
         )
 
@@ -72,7 +72,7 @@ class CarBuilder(Builder):
 
         cars_content = ft.Container(
             content=content,
-            padding=20,
+            padding=ft.Padding.symmetric(horizontal=0, vertical=10),
             expand=True,
         )
 

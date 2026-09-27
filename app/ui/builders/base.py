@@ -120,7 +120,7 @@ class Builder:
                     ft.Column(
                         [
                             ft.Text(
-                                str(getattr(car, "region_code", "") or "RUS"),
+                                car.region_code,
                                 size=10,
                                 weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.BLACK,
@@ -272,7 +272,7 @@ class Builder:
                 ],
                 spacing=8,
             ),
-            margin=ft.Margin.symmetric(horizontal=8, vertical=4),
+            margin=ft.Margin.symmetric(horizontal=5, vertical=6),
             padding=12,
             border_radius=12,
             bgcolor=ft.Colors.SURFACE_CONTAINER,
