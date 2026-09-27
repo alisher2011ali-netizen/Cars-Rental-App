@@ -478,12 +478,12 @@ class Builder:
                                         tenant.phone_number,
                                         size=14,
                                         color=ft.Colors.ON_SURFACE_VARIANT,
+                                        on_tap=lambda _, p=tenant.phone_number: (
+                                            on_phone_number_tap(p)
+                                        ),
                                     ),
                                 ],
                                 spacing=4,
-                                on_click=lambda _, p=tenant.phone_number: (
-                                    on_phone_number_tap(p)
-                                ),
                             ),
                         ],
                         spacing=4,

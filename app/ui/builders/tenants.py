@@ -426,8 +426,7 @@ class TenantBuilder(Builder):
                     ),
                     ft.IconButton(
                         ft.Icons.COPY,
-                        size=16,
-                        color=ft.Colors.ON_SURFACE_VARIANT,
+                        icon_color=ft.Colors.ON_SURFACE_VARIANT,
                         on_click=copy_phone,
                     ),
                 ],
