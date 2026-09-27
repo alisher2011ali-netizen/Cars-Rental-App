@@ -347,7 +347,7 @@ class CarBuilder(Builder):
                 ],
                 expand=True,
             ),
-            bgcolor=ft.Colors.with_opacity(0.95, ft.Colors.BLACK),
+            bgcolor=ft.Colors.with_opacity(0.95, ft.Colors.SURFACE),
             visible=False,
             expand=True,
             left=0,
@@ -433,6 +433,44 @@ class CarBuilder(Builder):
                 icon_color=ft.Colors.PRIMARY,
             )
 
+        # --- Диалог и кнопка удаления автомобиля ---
+        def close_car_dialog(e):
+            confirm_car_dialog.open = False
+            self.page.update()
+
+        async def delete_car_confirm(e):
+            confirm_car_dialog.open = False
+            db.delete(car)
+            db.commit()
+            self.page.update()
+            await self.page.push_route("/cars")
+
+        confirm_car_dialog = ft.AlertDialog(
+            title=ft.Text("Удалить автомобиль?"),
+            content=ft.Text(f"Вы точно хотите удалить {car.brand} {car.model}?"),
+            actions=[
+                ft.TextButton(localization.back, on_click=close_car_dialog),
+                ft.TextButton(
+                    "Удалить",
+                    on_click=delete_car_confirm,
+                    style=ft.ButtonStyle(color=ft.Colors.ERROR),
+                ),
+            ],
+        )
+
+        def open_car_delete_dialog(e):
+            if confirm_car_dialog not in self.page.overlay:
+                self.page.overlay.append(confirm_car_dialog)
+            confirm_car_dialog.open = True
+            self.page.update()
+
+        delete_car_button = ft.IconButton(
+            icon=ft.Icons.DELETE_OUTLINE,
+            icon_color=ft.Colors.ERROR,
+            tooltip="Удалить авто",
+            on_click=open_car_delete_dialog,
+        )
+
         return ft.View(
             route=f"/cars/{car_id}",
             controls=[
@@ -444,6 +482,7 @@ class CarBuilder(Builder):
                             self.page.push_route, "/cars"
                         ),
                     ),
+                    actions=[delete_car_button],
                 ),
                 ft.Container(
                     content=ft.Column(

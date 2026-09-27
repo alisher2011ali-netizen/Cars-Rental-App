@@ -428,75 +428,82 @@ class Builder:
         """
 
         def on_phone_number_tap(tenant_phone: str) -> None:
-            """Copy the tenant's contact phone number into the host clipboard buffer.
-
-            Args:
-                tenant_phone (str): Target phone number string.
-
-            Returns:
-                None: Writes to clipboard and triggers a toast notification.
-            """
             self.page.clipboard.set(tenant_phone)
-            snack = ft.SnackBar(localization.copied, open=True)
+            snack = ft.SnackBar(ft.Text(localization.copied), open=True)
             self.page.overlay.append(snack)
 
-        if not tenant.avatar:
+        if not getattr(tenant, "avatar", None):
+            first_letter = tenant.name[0].upper() if tenant.name else "?"
             avatar = ft.CircleAvatar(
-                content=ft.Text(tenant.name[0].upper(), size=50, color=ft.Colors.WHITE),
-                bgcolor=ft.Colors.BLUE_GREY_400,
-                radius=65,
-                expand=False,
+                content=ft.Text(
+                    first_letter,
+                    size=22,
+                    weight=ft.FontWeight.BOLD,
+                    color=ft.Colors.ON_PRIMARY_CONTAINER,
+                ),
+                bgcolor=ft.Colors.PRIMARY_CONTAINER,
+                radius=28,
             )
         else:
             avatar = ft.CircleAvatar(
-                content=ft.Image(src=tenant.avatar.path, align=ft.Alignment.CENTER),
-                radius=65,
-                expand=False,
+                foreground_image_url=tenant.avatar.path,
+                radius=28,
             )
 
+        async def go_to_details(e):
+            await self.page.push_route(f"/tenants/{tenant.id}")
+
         return ft.Container(
-            content=ft.Column(
-                [
-                    ft.Row(
+            content=ft.Row(
+                controls=[
+                    avatar,
+                    ft.Column(
                         controls=[
-                            ft.Container(
-                                ft.Column(
-                                    [
-                                        ft.Text(
-                                            tenant.name[:20],
-                                            size=20,
-                                            weight=ft.FontWeight.BOLD,
-                                            width=200,
-                                        ),
-                                        ft.Text(
-                                            tenant.phone_number,
-                                            size=20,
-                                            on_tap=lambda _, phone_number=tenant.phone_number: (
-                                                on_phone_number_tap(phone_number)
-                                            ),
-                                        ),
-                                        ft.TextButton(
-                                            ft.Text(localization.details, size=16),
-                                            on_click=lambda _, t_id=tenant.id: (
-                                                self.page.run_task(
-                                                    self.page.push_route,
-                                                    f"/tenants/{t_id}",
-                                                )
-                                            ),
-                                        ),
-                                    ],
+                            ft.Text(
+                                tenant.name,
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.ON_SURFACE,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                                max_lines=1,
+                            ),
+                            ft.Row(
+                                controls=[
+                                    ft.Icon(
+                                        ft.Icons.PHONE,
+                                        size=14,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
+                                    ft.Text(
+                                        tenant.phone_number,
+                                        size=14,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
+                                ],
+                                spacing=4,
+                                on_click=lambda _, p=tenant.phone_number: (
+                                    on_phone_number_tap(p)
                                 ),
                             ),
-                            avatar,
                         ],
-                        alignment=ft.MainAxisAlignment.START,
-                    )
+                        spacing=4,
+                        expand=True,
+                    ),
+                    ft.IconButton(
+                        icon=ft.Icons.CHEVRON_RIGHT,
+                        icon_color=ft.Colors.ON_SURFACE_VARIANT,
+                        on_click=go_to_details,
+                    ),
                 ],
-                spacing=5,
+                alignment=ft.MainAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=12,
             ),
-            padding=10,
-            alignment=ft.Alignment.CENTER_LEFT,
-            bgcolor=ft.Colors.GREY_100,
+            margin=ft.Margin.symmetric(horizontal=5, vertical=4),
+            padding=12,
+            border_radius=12,
+            bgcolor=ft.Colors.SURFACE_CONTAINER,
+            on_click=go_to_details,
         )
 
     def create_payment_card(self, payment: Payment) -> ft.Container:
