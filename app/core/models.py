@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from decimal import Decimal
 
+from core.config import config
 from sqlalchemy import (
     DECIMAL,
     Boolean,
@@ -22,11 +23,7 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 
-data_path = os.getenv("FLET_APP_STORAGE_DATA")
-if not data_path:
-    # Fallback to the current working directory if no dedicated storage directory is set
-    data_path = os.getcwd()
-db_path = os.path.join(data_path, "main.db")
+db_path = os.path.join(config.app_data_path, "main.db")
 
 engine = create_engine(f"sqlite:///{db_path}", echo=False)
 session_factory = sessionmaker(bind=engine)

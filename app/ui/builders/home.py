@@ -1,12 +1,15 @@
 import flet as ft
+from core.models import Car, session_factory
 from services.localization import localization
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 
 
 class HomeBuilder(Builder):
     """Build UI views and widgets for the primary dashboard and home screen."""
 
-    def build_home_view(self) -> ft.View:
+    def build_home_view(self, db: Session | None = None) -> ft.View:
         """Construct the main home view displaying recent vehicles or a placeholder.
 
         Args:
@@ -15,7 +18,10 @@ class HomeBuilder(Builder):
         Returns:
             ft.View: View containing the dashboard layout, navigation bar, and recent cars.
         """
-        last_added_cars, images_dict = self.connector.get_last_added_cars()
+        if db is None:
+            db = session_factory()
+
+        last_added_cars = db.scalars(select(Car).order_by(Car.id.desc()).limit(5)).all()
 
         title = ft.AppBar(
             title=ft.Text(
@@ -73,7 +79,7 @@ class HomeBuilder(Builder):
         )
 
         for car in last_added_cars:
-            car_images = images_dict.get(car.id, [])
+            car_images = getattr(car, "images", None)
             if car_images:
                 card = self.create_car_card(car, car_images)
             else:

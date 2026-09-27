@@ -5,8 +5,6 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-default_images_path = Path("data/images/")
-
 
 class FileManager:
     """Handle low-level filesystem I/O operations including file retrieval, copying, and deletion."""

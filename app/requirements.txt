@@ -2,3 +2,4 @@ flet
 sqlalchemy
 pdfminer.six
 Unidecode
+pydantic

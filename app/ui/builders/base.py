@@ -84,7 +84,7 @@ class Builder:
 
         Args:
             car (Car): Vehicle model instance containing attributes to display.
-            car_images (list[str] | None): Base64-encoded image sources for carousel display. Defaults to None.
+            car_images (list[str] | None): Image sources for carousel display. Defaults to None.
 
         Returns:
             ft.Container: Configured interactive container card for the vehicle.

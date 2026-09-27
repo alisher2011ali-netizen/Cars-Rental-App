@@ -1,12 +1,20 @@
-import base64
 import logging
 import uuid
+from pathlib import Path
 
-from core.models import Car, Image, Payment, PaymentType, session_factory
+from core.config import config
+from core.models import Image, Payment, PaymentType, session_factory
 from parsing.parser import process_sber_pdf
 from services.file_manager import FileManager
-from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+IMAGE_SUBDIRS: dict[tuple[str, str], str] = {
+    ("car", "car_photo"): "cars",
+    ("tenant", "avatar"): "tenants/avatars",
+    ("tenant", "passport"): "tenants/passports",
+    ("tenant", "sub_passport"): "tenants/sub_passports",
+    ("tenant", "driver_license"): "tenants/driver_licenses",
+}
 
 logger = logging.getLogger(__name__)
 
@@ -24,51 +32,6 @@ class Connector:
             None: Initializes service instances.
         """
         self.file_manager = FileManager()
-
-    def get_last_added_cars(
-        self, limit: int = 5, db: Session | None = None
-    ) -> tuple[list[Car], dict[int, list[str]]]:
-        """Fetch the most recently registered cars along with their base64-encoded photos.
-
-        Args:
-            limit (int): Maximum number of vehicle records to retrieve. Defaults to 5.
-            db (Session | None): Optional existing database session. Defaults to None.
-
-        Returns:
-            tuple[list[Car], dict[int, list[str]]]: A tuple containing the list of retrieved
-                Car records and a mapping of car IDs to their base64-encoded image payloads.
-        """
-        if db is None:
-            db = session_factory()
-
-        last_added_cars = db.scalars(
-            select(Car).order_by(Car.id.desc()).limit(limit)
-        ).all()
-        if not last_added_cars:
-            return [], {}
-        try:
-            images = {}
-            for car in last_added_cars:
-                images[car.id] = []
-
-                if not car.images:
-                    continue
-
-                for car_image in car.images:
-                    with open(car_image.path, "rb") as f:
-                        image_bytes = f.read()
-                        # Base64 string encoding is required for direct inline rendering in UI views
-                        images[car.id].append(
-                            base64.b64encode(image_bytes).decode("utf-8")
-                        )
-        except Exception:
-            logger.exception(
-                "An error occurred while retrieving images for the last added cars."
-            )
-            # Fall back to empty image collections to preserve vehicle metadata access if disk reads fail
-            images = {car.id: [] for car in last_added_cars}
-
-        return last_added_cars, images
 
     async def save_image(
         self,
@@ -95,31 +58,31 @@ class Connector:
             db = session_factory()
 
         try:
-            # Append a short hash to avoid filesystem collisions when overwriting existing photos
-            unique_number = uuid.uuid4().hex[:8]
-            if object_type == "car":
-                new_path = f"data/images/cars/{object_id}_{unique_number}.jpg"
-            elif object_type == "tenant":
-                match category:
-                    case "avatar":
-                        new_path = f"data/images/tenants/avatars/{object_id}_{unique_number}.jpg"
-                    case "passport":
-                        new_path = f"data/images/tenants/passports/{object_id}_{unique_number}.jpg"
-                    case "sub_passport":
-                        new_path = f"data/images/tenants/sub_passports/{object_id}_{unique_number}.jpg"
-                    case "driver_license":
-                        new_path = f"data/images/tenants/driver_licenses/{object_id}_{unique_number}.jpg"
+            # 1. Определяем целевую папку через маппинг
+            subdir = IMAGE_SUBDIRS.get(
+                (object_type, category),
+                f"{object_type}s/{category}",  # Fallback на случай новых типов/категорий
+            )
 
-            self.file_manager.copy_file(image_path, new_path)
+            # 2. Генерируем уникальное имя и итоговый путь
+            unique_suffix = uuid.uuid4().hex[:8]
+            file_name = f"{object_id}_{unique_suffix}.jpg"
+            dest_path = Path(config.app_data_path) / "images" / subdir / file_name
+
+            # 3. Сохраняем файл на диск и в БД
+            dest_str = str(dest_path)
+            self.file_manager.copy_file(image_path, dest_str)
+
             new_image = Image(
                 object_type=object_type,
                 object_id=object_id,
                 category=category,
-                path=new_path,
+                path=dest_str,
             )
             db.add(new_image)
             db.commit()
-            return new_path
+            return dest_str
+
         except Exception:
             logger.exception(
                 f"An error occurred while saving the image for {object_type} {object_id}."
