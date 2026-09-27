@@ -8,12 +8,12 @@ from parsing.parser import process_sber_pdf
 from services.file_manager import FileManager
 from sqlalchemy.orm import Session
 
-IMAGE_SUBDIRS: dict[tuple[str, str], str] = {
-    ("car", "car_photo"): "cars",
-    ("tenant", "avatar"): "tenants/avatars",
-    ("tenant", "passport"): "tenants/passports",
-    ("tenant", "sub_passport"): "tenants/sub_passports",
-    ("tenant", "driver_license"): "tenants/driver_licenses",
+IMAGE_SUBDIRS: dict[str, str] = {
+    "car_photo": "cars",
+    "avatar": "tenants/avatars",
+    "passport": "tenants/passports",
+    "sub_passport": "tenants/sub_passports",
+    "driver_license": "tenants/driver_licenses",
 }
 
 logger = logging.getLogger(__name__)
@@ -58,18 +58,12 @@ class Connector:
             db = session_factory()
 
         try:
-            # 1. Определяем целевую папку через маппинг
-            subdir = IMAGE_SUBDIRS.get(
-                (object_type, category),
-                f"{object_type}s/{category}",  # Fallback на случай новых типов/категорий
-            )
+            subdir = IMAGE_SUBDIRS.get(category, f"{object_type}s/{category}")
 
-            # 2. Генерируем уникальное имя и итоговый путь
             unique_suffix = uuid.uuid4().hex[:8]
             file_name = f"{object_id}_{unique_suffix}.jpg"
             dest_path = Path(config.app_data_path) / "images" / subdir / file_name
 
-            # 3. Сохраняем файл на диск и в БД
             dest_str = str(dest_path)
             self.file_manager.copy_file(image_path, dest_str)
 

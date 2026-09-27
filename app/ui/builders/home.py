@@ -79,11 +79,8 @@ class HomeBuilder(Builder):
         )
 
         for car in last_added_cars:
-            car_images = getattr(car, "images", None)
-            if car_images:
-                card = self.create_car_card(car, car_images)
-            else:
-                card = self.create_car_card(car)
+            car_images = [img.path for img in car.images] if car.images else []
+            card = self.create_car_card(car, car_images)
             cars_column.controls.append(card)
 
         subtitle = ft.Text(
