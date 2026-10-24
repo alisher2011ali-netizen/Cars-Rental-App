@@ -1,27 +1,25 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 
 import flet as ft
 from core.models import Car, Rental, Tenant, session_factory
 from services.localization import localization
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 
 
 class RentalBuilder(Builder):
     """Build UI views and workflows for managing car rental contracts."""
 
-    def build_rentals_view(self, db: Session | None = None) -> ft.View:
+    def build_rentals_view(self) -> ft.View:
         """Construct the rentals list view displaying active and historical leases.
 
         Args:
-            db (Session | None): Optional active database session. Defaults to None.
+            None
 
         Returns:
             ft.View: View containing rental cards or an empty-state screen.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         rentals_list = db.scalars(select(Rental)).all()
         fab = self.build_fab("/add_rental", localization.add_rental)
@@ -74,47 +72,26 @@ class RentalBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_rental_view(self, db: Session | None = None) -> ft.View:
+    def build_add_rental_view(self) -> ft.View:
         """Construct the lease agreement creation view with dynamic tariff calculators.
 
         Args:
-            db (Session | None): Optional active database session. Defaults to None.
+            None
 
         Returns:
             ft.View: View containing form fields for calculating and creating leases.
         """
-        if db is None:
-            db = session_factory()
 
-        selected_car_id = None
-        selected_tenant_id = None
-
-        def on_car_select(e: ft.ControlEvent) -> None:
-            """Track selected vehicle identifier from dropdown changes.
-
-            Args:
-                e (ft.ControlEvent): Dropdown selection event.
-
-            Returns:
-                None: Mutates selected_car_id in outer closure scope.
-            """
-            nonlocal selected_car_id
-            selected_car_id = e.control.value
-
-        def on_tenant_select(e: ft.ControlEvent) -> None:
-            """Track selected tenant identifier from dropdown changes.
-
-            Args:
-                e (ft.ControlEvent): Dropdown selection event.
-
-            Returns:
-                None: Mutates selected_tenant_id in outer closure scope.
-            """
-            nonlocal selected_tenant_id
-            selected_tenant_id = e.control.value
-
-        cars = db.scalars(select(Car)).all()
-        tenants = db.scalars(select(Tenant)).all()
+        # Загружаем данные и сразу закрываем сессию: в замыканиях держим только простые значения
+        db = session_factory()
+        cars = [
+            (car.id, f"{car.brand} {car.model} ({car.plate_number})")
+            for car in db.scalars(select(Car)).all()
+        ]
+        tenants = [
+            (t.id, f"{t.name} ({t.phone_number})")
+            for t in db.scalars(select(Tenant)).all()
+        ]
 
         if not cars or not tenants:
             snack = ft.SnackBar(
@@ -125,31 +102,17 @@ class RentalBuilder(Builder):
             self.page.overlay.append(snack)
             return self.build_rentals_view()
 
-        car_options = [
-            ft.DropdownOption(
-                key=car.id, text=f"{car.brand} {car.model} ({car.plate_number})"
-            )
-            for car in cars
-        ]
         car_dropdown = ft.Dropdown(
-            options=car_options,
-            value=car_options[0].key if car_options else None,
+            options=[ft.DropdownOption(key=str(cid), text=text) for cid, text in cars],
+            value=str(cars[0][0]),
             width=300,
-            on_select=on_car_select,
         )
-
-        tenant_options = [
-            ft.DropdownOption(
-                key=tenant.id,
-                text=f"{tenant.name} ({tenant.phone_number})",
-            )
-            for tenant in tenants
-        ]
         tenant_dropdown = ft.Dropdown(
-            options=tenant_options,
-            value=tenant_options[0].key if tenant_options else None,
+            options=[
+                ft.DropdownOption(key=str(tid), text=text) for tid, text in tenants
+            ],
+            value=str(tenants[0][0]),
             width=300,
-            on_select=on_tenant_select,
         )
 
         dates_info_text = ft.Text(
@@ -164,20 +127,16 @@ class RentalBuilder(Builder):
             color=ft.Colors.GREEN_700,
         )
 
+        # Одна общая строка ошибки формы (вне period_column, чтобы не пряталась)
+        form_error = ft.Text(color=ft.Colors.RED, size=14, visible=False)
+
         period_field = ft.TextField(
             label=localization.payment_period,
+            value="7",
             keyboard_type=ft.KeyboardType.NUMBER,
             on_change=lambda _: recalculate_total(),
         )
-
-        error_text = ft.Text(
-            value=localization.invalid_input_greater_than_zero,
-            color=ft.Colors.RED,
-            size=14,
-            visible=False,
-        )
-
-        period_column = ft.Column([period_field, error_text], spacing=5, visible=False)
+        period_column = ft.Column([period_field], spacing=5, visible=False)
 
         price_field = ft.TextField(
             label=localization.cost_per_week,
@@ -187,110 +146,121 @@ class RentalBuilder(Builder):
             on_change=lambda _: recalculate_total(),
         )
 
-        tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
-        start_picker = ft.DatePicker(
-            value=datetime.now(timezone.utc), on_change=lambda _: recalculate_total()
-        )
-        end_picker = ft.DatePicker(
-            value=tomorrow, on_change=lambda _: recalculate_total()
+        notes_field = ft.TextField(
+            label=localization.notes,  # добавь ключ в локали
+            multiline=True,
+            min_lines=2,
+            max_lines=4,
+            width=400,
         )
 
-        manual_date_row = ft.Row(
-            [
-                ft.Button(
-                    localization.start,
-                    icon=ft.Icons.CALENDAR_MONTH,
-                    on_click=lambda _: self.page.show_dialog(start_picker),
-                ),
-                ft.Button(
-                    localization.end,
-                    icon=ft.Icons.CALENDAR_MONTH,
-                    on_click=lambda _: self.page.show_dialog(end_picker),
-                ),
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            visible=True,
+        def to_date(value: datetime | date) -> date:
+            return value.date() if isinstance(value, datetime) else value
+
+        now = datetime.now()
+        start_picker = ft.DatePicker(value=now, on_change=lambda _: on_date_change())
+        end_picker = ft.DatePicker(
+            value=now + timedelta(days=7), on_change=lambda _: on_date_change()
         )
+
+        start_button = ft.Button(
+            f"{localization.start}: {to_date(start_picker.value):%d.%m.%Y}",
+            icon=ft.Icons.CALENDAR_MONTH,
+            on_click=lambda _: self.page.show_dialog(start_picker),
+        )
+        end_button = ft.Button(
+            f"{localization.end}: {to_date(end_picker.value):%d.%m.%Y}",
+            icon=ft.Icons.CALENDAR_MONTH,
+            on_click=lambda _: self.page.show_dialog(end_picker),
+        )
+        manual_date_row = ft.Row(
+            [start_button, end_button], alignment=ft.MainAxisAlignment.CENTER
+        )
+
+        def calculate() -> dict | None:
+            """Единый расчёт для экрана и для сохранения. None — если ввод некорректен."""
+            tariff = tariff_radio.value
+            if tariff == "weekly":
+                period = 7
+            elif tariff == "monthly":
+                period = 30  # расчётный месяц = 30 дней
+            else:
+                raw = period_field.value or ""
+                if not raw.isdigit() or int(raw) <= 0:
+                    return None
+                period = int(raw)
+
+            raw_price = (price_field.value or "").strip()
+            if not raw_price.isdigit():
+                return None
+            price = int(raw_price)
+
+            start = to_date(start_picker.value)
+            end = to_date(end_picker.value)
+            count = (end - start).days // period  # неполный период отбрасываем
+            return {
+                "period": period,
+                "price": price,
+                "count": count,
+                "start": start,
+                # реальный конец = только полные периоды
+                "end": start + timedelta(days=max(count, 0) * period),
+                "total": price * max(count, 0),
+            }
+
+        def show_error(text: str) -> None:
+            form_error.value = text
+            form_error.visible = True
+            form_error.update()
 
         def recalculate_total() -> None:
-            """Recalculate rental duration cycles and aggregate cost according to active tariff rules.
+            form_error.visible = False
+            data = calculate()
 
-            Args:
-                None
-
-            Returns:
-                None: Updates pricing, date duration text, and validation hints in-place.
-            """
-            tariff = tariff_radio.value
-            try:
-                entered_price = float(price_field.value or 0)
-            except ValueError:
-                entered_price = 0
-
-            total_amount = 0
-            error_text.visible = False
-
-            if tariff == "weekly":
-                start_date = start_picker.value
-                difference = end_picker.value - start_date
-                # Integer division truncates uncompleted week intervals
-                weeks = difference.days // 7
-                end_date = start_date + timedelta(weeks=weeks)
-                total_amount = entered_price * weeks
-                dates_info_text.value = f"{localization.term}: {weeks} {localization.weeks_short} ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
-
-            elif tariff == "monthly":
-                start_date = start_picker.value
-                difference = end_picker.value - start_date
-                # Standardize contractual billing month to fixed 30-day blocks
-                months = difference.days // 30
-                end_date = start_date + timedelta(days=months * 30)
-                total_amount = entered_price * months
-                dates_info_text.value = f"{localization.term}: {months} {localization.months_short} ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
-
-            elif tariff == "custom":
-                if not period_field.value:
-                    dates_info_text.value = localization.enter_period
-                elif not period_field.value.isdigit() or int(period_field.value) <= 0:
-                    error_text.visible = True
-                    error_text.update()
-                    return
+            if data is None:
+                dates_info_text.value = localization.enter_period
+                total_price_text.value = (
+                    f"{localization.total_to_be_paid}: 0 {localization.currency}"
+                )
+            else:
+                unit = {
+                    "weekly": localization.weeks_short,
+                    "monthly": localization.months_short,
+                }.get(tariff_radio.value)
+                if unit:
+                    label = f"{data['count']} {unit}"
                 else:
-                    start_date = start_picker.value
-                    difference = end_picker.value - start_date
-                    period = int(period_field.value)
+                    label = f"{data['count']} {localization.times_by} {data['period']} {localization.days_short}"
+                dates_info_text.value = (
+                    f"{localization.term}: {label} "
+                    f"({data['start']:%d.%m} - {data['end']:%d.%m})"
+                )
+                total_price_text.value = f"{localization.total_to_be_paid}: {data['total']:.2f} {localization.currency}"
 
-                    periods_count = difference.days // period
-                    end_date = start_date + timedelta(days=periods_count * period)
-                    total_amount = entered_price * periods_count
-
-                    dates_info_text.value = f"{localization.term}: {periods_count} {localization.times_by} {period} {localization.days_short} ({start_date.strftime('%d.%m')} - {end_date.strftime('%d.%m')})"
-
-            total_price_text.value = f"{localization.total_to_be_paid}: {total_amount:.2f} {localization.currency}"
-
-            error_text.update()
+            form_error.update()
             dates_info_text.update()
             total_price_text.update()
 
+        def on_date_change() -> None:
+            start_button.text = (
+                f"{localization.start}: {to_date(start_picker.value):%d.%m.%Y}"
+            )
+            end_button.text = (
+                f"{localization.end}: {to_date(end_picker.value):%d.%m.%Y}"
+            )
+            start_button.update()
+            end_button.update()
+            recalculate_total()
+
         def on_tariff_change(e: ft.ControlEvent) -> None:
-            """Adjust visible form controls and recompute totals when changing billing tariffs.
-
-            Args:
-                e (ft.ControlEvent): Radio group selection change event.
-
-            Returns:
-                None: Updates label text, toggles custom inputs, and triggers recalculation.
-            """
             tariff = e.control.value
             if tariff == "weekly":
                 price_field.label = localization.cost_per_week
-                period_column.visible = False
             elif tariff == "monthly":
                 price_field.label = localization.cost_per_month
-                period_column.visible = False
-            elif tariff == "custom":
+            else:
                 price_field.label = localization.cost_per_period
-                period_column.visible = True
+            period_column.visible = tariff == "custom"
 
             price_field.update()
             period_column.update()
@@ -309,17 +279,45 @@ class RentalBuilder(Builder):
             on_change=on_tariff_change,
         )
 
-        def on_click_save(e: ft.ControlEvent) -> None:
-            """Persist the entered rental attributes.
+        async def on_click_save(e: ft.ControlEvent) -> None:
+            data = calculate()
+            if data is None:
+                show_error(localization.invalid_input_greater_than_zero)
+                return
+            if data["count"] < 1:
+                show_error(localization.rental_shorter_than_period)  # новый ключ
+                return
 
-            Args:
-                e (ft.ControlEvent): Save button click event.
+            car_id = int(car_dropdown.value)
+            tenant_id = int(tenant_dropdown.value)
+            # Проверка пересечения с существующими арендами этой машины
+            clash = db.scalars(
+                select(Rental).where(
+                    Rental.car_id == car_id,
+                    Rental.start_date < data["end"],
+                    Rental.end_date > data["start"],
+                )
+            ).first()
+            if clash:
+                show_error(localization.car_already_rented)  # новый ключ
+                return
 
-            Returns:
-                None: Commits record to database and navigates back to the inventory list.
-            """
+            db.add(
+                Rental(
+                    car_id=car_id,
+                    tenant_id=tenant_id,
+                    start_date=data["start"],
+                    end_date=data["end"],
+                    period=data["period"],
+                    price_per_period=data["price"],
+                    total_cost=data["total"],
+                    notes=notes_field.value or None,
+                )
+            )
+            db.commit()
 
-        # TODO: save rental to database
+            self.build_complete_snack_bar()
+            await self.page.push_route("/rentals")
 
         save_button = ft.Button(
             localization.save, icon=ft.Icons.SAVE, on_click=on_click_save
@@ -328,18 +326,18 @@ class RentalBuilder(Builder):
         content = ft.Column(
             [
                 ft.Text(
-                    f"📋 {localization.add_rental}",
-                    size=24,
-                    weight=ft.FontWeight.BOLD,
+                    f"📋 {localization.add_rental}", size=24, weight=ft.FontWeight.BOLD
                 ),
                 car_dropdown,
                 tenant_dropdown,
                 tariff_radio,
                 period_column,
                 price_field,
+                manual_date_row,
                 dates_info_text,
                 total_price_text,
-                manual_date_row,
+                notes_field,
+                form_error,
                 save_button,
             ],
             alignment=ft.MainAxisAlignment.CENTER,

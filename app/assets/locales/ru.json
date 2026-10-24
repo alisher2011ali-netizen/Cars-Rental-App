@@ -80,7 +80,7 @@
   "tenants": "Водители",
   "term": "Срок",
   "times_by": "раз(а) по",
-  "total_to_be_paid": "Итог",
+  "total_to_be_paid": "Итого",
   "type": "Тип",
   "upload_avatar": "Загрузить аватар",
   "upload_driver_license": "Загрузить водительское удостоверение",
@@ -90,5 +90,12 @@
   "upload_subpassport": "Загрузить суб-паспорт",
   "weekly": "Недельно",
   "weeks_short": "нед.",
-  "year_of_production": "Год выпуска"
+  "year_of_production": "Год выпуска",
+  "tenant_details": "Детали водителя",
+  "documents": "Документы",
+  "no_documents": "Нет документов",
+  "debt": "Долг",
+  "notes": "Заметки",
+  "rental_shorter_than_period": "Период не может быть меньше 1 дня.",
+  "car_already_rented": "Машина уже в аренде."
 }

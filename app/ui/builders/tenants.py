@@ -5,24 +5,22 @@ import flet as ft
 from core.models import Tenant, session_factory
 from services.localization import localization
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 
 
 class TenantBuilder(Builder):
     """Build UI views and controls for tenant directory browsing and creation."""
 
-    def build_tenants_view(self, db: Session | None = None) -> ft.View:
+    def build_tenants_view(self) -> ft.View:
         """Construct the primary tenants listing view.
 
         Args:
-            db (Session | None): Optional active database session. Defaults to None.
+            None
 
         Returns:
             ft.View: View containing the list of registered tenants or an empty placeholder.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         tenants_list = db.scalars(select(Tenant)).all()
         fab = self.build_fab("/add_tenant", localization.add_tenant)
@@ -73,17 +71,16 @@ class TenantBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_tenant_view(self, db: Session | None = None) -> ft.View:
+    def build_add_tenant_view(self) -> ft.View:
         """Construct the tenant creation form view with document upload handlers.
 
         Args:
-            db (Session | None): Optional active database session. Defaults to None.
+            None
 
         Returns:
             ft.View: View containing input fields and file picker actions for registering a tenant.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         paths = {
             "avatar": None,
@@ -224,7 +221,8 @@ class TenantBuilder(Builder):
         )
 
     def build_tenant_details_view(
-        self, tenant_id: int, db: Session | None = None
+        self,
+        tenant_id: int,
     ) -> ft.View:
         """Build a comprehensive tenant details view.
 
@@ -234,13 +232,11 @@ class TenantBuilder(Builder):
 
         Args:
             tenant_id (int): Identifier of the tenant to display.
-            db (Session | None, optional): Database session instance. Defaults to None.
 
         Returns:
             ft.View: Configured Flet View instance.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         tenant = db.get(Tenant, tenant_id)
         if not tenant:

@@ -6,7 +6,6 @@ from core.config import config
 from core.models import Image, Payment, PaymentType, session_factory
 from parsing.parser import process_sber_pdf
 from services.file_manager import FileManager
-from sqlalchemy.orm import Session
 
 IMAGE_SUBDIRS: dict[str, str] = {
     "car_photo": "cars",
@@ -40,7 +39,6 @@ class Connector:
         object_id: int,
         object_type: str,
         category: str = "car_photo",
-        db: Session | None = None,
     ) -> str:
         """Store an uploaded image on disk and register its metadata in the database.
 
@@ -49,13 +47,11 @@ class Connector:
             object_id (int): Primary key of the entity associated with the image.
             object_type (str): Domain entity discriminator ('car' or 'tenant').
             category (str): Sub-category classification for the image. Defaults to 'car_photo'.
-            db (Session | None): Optional existing database session. Defaults to None.
 
         Returns:
             str: Destination storage path if successfully saved, or an empty string on failure.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         try:
             subdir = IMAGE_SUBDIRS.get(category, f"{object_type}s/{category}")
@@ -83,18 +79,16 @@ class Connector:
             )
             return ""
 
-    def save_statement(self, file_path: str, db: Session | None = None) -> bool:
+    def save_statement(self, file_path: str) -> bool:
         """Parse an external bank PDF statement and persist all extracted payments.
 
         Args:
             file_path (str): Filesystem path to the bank statement PDF file.
-            db (Session | None): Optional existing database session. Defaults to None.
 
         Returns:
             bool: True if parsing and database insertion succeeded, False otherwise.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         try:
             data = process_sber_pdf(file_path)

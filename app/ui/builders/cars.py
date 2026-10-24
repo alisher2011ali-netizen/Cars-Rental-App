@@ -2,24 +2,22 @@ import flet as ft
 from core.models import Car, session_factory
 from services.localization import localization
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 
 
 class CarBuilder(Builder):
     """Build UI views and controls for car inventory management and detailed displays."""
 
-    def build_cars_view(self, db: Session | None = None) -> ft.View:
+    def build_cars_view(self) -> ft.View:
         """Construct the primary vehicles catalog view.
 
         Args:
-            db (Session | None): Optional active database session. Defaults to None.
+            None
 
         Returns:
             ft.View: View displaying the list of registered vehicles or an empty placeholder.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         cars_list = db.scalars(select(Car)).all()
         fab = self.build_fab("/add_car", localization.add_car)
@@ -84,17 +82,16 @@ class CarBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_car_view(self, db: Session | None = None) -> ft.View:
+    def build_add_car_view(self) -> ft.View:
         """Construct the registration form view for adding a new vehicle.
 
         Args:
-            db (Session | None): Optional active database session. Defaults to None.
+            None
 
         Returns:
             ft.View: View containing input fields and file upload triggers for vehicle creation.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         selected_images_paths = []
 
@@ -125,10 +122,21 @@ class CarBuilder(Builder):
             Returns:
                 None: Commits record to database and navigates back to the inventory list.
             """
+            try:
+                year = int(year_input.value.strip())
+            except ValueError:
+                snack = ft.SnackBar(
+                    ft.Text("⚠ Укажите год цифрами."),
+                    bgcolor=ft.Colors.RED_500,
+                    open=True,
+                )
+                self.page.overlay.append(snack)
+                return
+
             new_car = Car(
                 brand=brand_input.value,
                 model=model_input.value,
-                year=year_input.value,
+                year=year,
                 plate_number=plate_num_input.value,
                 region_code=region_code_input.value,
             )
@@ -190,18 +198,16 @@ class CarBuilder(Builder):
             controls=[input],
         )
 
-    def build_car_details_view(self, car_id: int, db: Session | None = None) -> ft.View:
+    def build_car_details_view(self, car_id: int) -> ft.View:
         """Construct the detailed vehicle view with full-screen gallery inspection.
 
         Args:
             car_id (int): Primary key of the car to display.
-            db (Session | None): Optional active database session. Defaults to None.
 
         Returns:
             ft.View: View containing vehicle specs, media carousel, and active rental shortcuts.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         car = db.get(Car, car_id)
         if not car:

@@ -2,24 +2,22 @@ import flet as ft
 from core.models import Payment, PaymentType, session_factory
 from services.localization import localization
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 from ui.builders.base import Builder
 
 
 class FinanceBuilder(Builder):
     """Build UI views and workflows for financial records and statement processing."""
 
-    def build_finances_view(self, db: Session | None = None) -> ft.View:
+    def build_finances_view(self) -> ft.View:
         """Construct the financial transactions overview screen with PDF import capabilities.
 
         Args:
-            db (Session | None): Optional active database session. Defaults to None.
+            None
 
         Returns:
             ft.View: View containing the list of parsed/manual payments or an empty state.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         payments_list = db.scalars(select(Payment)).all()
         title = ft.AppBar(
@@ -102,17 +100,16 @@ class FinanceBuilder(Builder):
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
 
-    def build_add_payment_view(self, db: Session | None = None) -> ft.View:
+    def build_add_payment_view(self) -> ft.View:
         """Construct the manual payment logging screen with input validation.
 
         Args:
-            db (Session | None): Optional active database session. Defaults to None.
+            None
 
         Returns:
             ft.View: View containing form fields for logging transactions.
         """
-        if db is None:
-            db = session_factory()
+        db = session_factory()
 
         async def save_payment(e: ft.ControlEvent) -> None:
             """Validate monetary inputs and persist a new payment transaction.
