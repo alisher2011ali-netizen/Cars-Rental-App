@@ -6,6 +6,7 @@ from core.config import config
 from core.models import Image, Payment, PaymentType, session_factory
 from parsing.parser import process_sber_pdf
 from services.file_manager import FileManager
+from sqlalchemy.orm import Session
 
 IMAGE_SUBDIRS: dict[str, str] = {
     "car_photo": "cars",
@@ -39,6 +40,7 @@ class Connector:
         object_id: int,
         object_type: str,
         category: str = "car_photo",
+        db: Session | None = None,
     ) -> str:
         """Store an uploaded image on disk and register its metadata in the database.
 
@@ -51,7 +53,8 @@ class Connector:
         Returns:
             str: Destination storage path if successfully saved, or an empty string on failure.
         """
-        db = session_factory()
+        if not db:
+            db = session_factory()
 
         try:
             subdir = IMAGE_SUBDIRS.get(category, f"{object_type}s/{category}")

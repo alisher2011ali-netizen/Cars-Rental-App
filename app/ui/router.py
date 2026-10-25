@@ -82,6 +82,10 @@ class UIRouter:
                 tenant_builder = TenantBuilder(self.page)
                 view = tenant_builder.build_tenant_details_view(int(troute.id))
 
+            elif troute.match("/rentals/:id(\\d+)"):
+                rental_builder = RentalBuilder(self.page)
+                view = rental_builder.build_rental_details_view(int(troute.id))
+
             else:
                 match e.route:
                     case "/":

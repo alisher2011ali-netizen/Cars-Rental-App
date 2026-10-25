@@ -115,7 +115,7 @@ class Builder:
                     ft.Container(
                         width=1,
                         height=16,
-                        bgcolor=ft.Colors.BLACK54,
+                        bgcolor=ft.Colors.BLACK_54,
                     ),
                     ft.Column(
                         [
@@ -135,7 +135,7 @@ class Builder:
                 spacing=6,
             ),
             bgcolor=ft.Colors.WHITE,
-            border=ft.Border.all(1.5, ft.Colors.BLACK87),
+            border=ft.Border.all(1.5, ft.Colors.BLACK_87),
             border_radius=4,
             padding=ft.Padding.symmetric(horizontal=8, vertical=2),
         )
@@ -739,6 +739,5 @@ class Builder:
             ),
             padding=15,
             border_radius=12,
-            bgcolor=ft.Colors.GREY_100,
             shadow=True,
         )

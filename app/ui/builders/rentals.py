@@ -1,9 +1,9 @@
 from datetime import date, datetime, timedelta
 
 import flet as ft
-from core.models import Car, Rental, Tenant, session_factory
+from core.models import Car, Payment, Rental, Tenant, session_factory
 from services.localization import localization
-from sqlalchemy import select
+from sqlalchemy import func, select
 from ui.builders.base import Builder
 
 
@@ -54,9 +54,7 @@ class RentalBuilder(Builder):
             )
 
         rentals_content = ft.Container(
-            content=ft.Column([title], spacing=20),
-            padding=40,
-            bgcolor=ft.Colors.WHITE,
+            content=ft.Column(spacing=20),
             expand=True,
         )
 
@@ -67,7 +65,7 @@ class RentalBuilder(Builder):
         return ft.View(
             route="/rentals",
             navigation_bar=self.get_nav_bar(3),
-            controls=[rentals_content],
+            controls=[title, rentals_content],
             floating_action_button=fab,
             floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         )
@@ -350,3 +348,283 @@ class RentalBuilder(Builder):
                 ft.Container(content=content, padding=20, alignment=ft.Alignment.CENTER)
             ],
         )
+
+    def build_rental_details_view(self, rental_id: int) -> ft.View:
+        """Construct the rental details view with car, tenant and finance blocks.
+
+        Args:
+            rental_id (int): Primary key of the rental to display.
+
+        Returns:
+            ft.View: Details view, or the rentals list if the record does not exist.
+        """
+        with session_factory() as db:
+            rental = db.get(Rental, rental_id)
+            if rental is None:
+                snack = ft.SnackBar(
+                    ft.Text(localization.rental_not_found),  # новый ключ
+                    bgcolor=ft.Colors.RED_500,
+                    open=True,
+                )
+                self.page.overlay.append(snack)
+                return self.build_rentals_view()
+
+            car = db.get(Car, rental.car_id)
+            tenant = db.get(Tenant, rental.tenant_id)
+
+            # ASSUMPTION: модель платежей Payment с полями rental_id, tenant_id, amount
+            paid = db.scalar(
+                select(func.coalesce(func.sum(Payment.amount), 0)).where(
+                    Payment.rental_id == rental.id
+                )
+            )
+
+            # Долг водителя = сумма долгов по всем его арендам
+            tenant_rentals = db.scalars(
+                select(Rental).where(Rental.tenant_id == tenant.id)
+            ).all()
+            tenant_debt = 0
+            for r in tenant_rentals:
+                r_paid = db.scalar(
+                    select(func.coalesce(func.sum(Payment.amount), 0)).where(
+                        Payment.rental_id == r.id
+                    )
+                )
+                tenant_debt += max(self._amount_due(r) - r_paid, 0)
+
+            # Забираем всё нужное в простые значения, пока сессия открыта
+            data = {
+                "car_title": f"{car.brand} {car.model}",
+                "plate": car.plate_number,
+                "images": car.images,  # ASSUMPTION: имя поля с фото
+                "tenant_name": tenant.name,
+                "tenant_phone": tenant.phone_number,
+                "start": rental.start_date,
+                "end": rental.end_date,
+                "period": rental.period,
+                "price": rental.price_per_period,
+                "total": rental.total_cost,
+                "notes": rental.notes,
+                "car_id": car.id,
+                "tenant_id": tenant.id,
+            }
+
+        today = date.today()
+        start = (
+            data["start"].date()
+            if isinstance(data["start"], datetime)
+            else data["start"]
+        )
+        end = data["end"].date() if isinstance(data["end"], datetime) else data["end"]
+
+        # Статус по датам
+        if today < start:
+            status_text, status_color = localization.status_upcoming, ft.Colors.BLUE_700
+        elif today <= end:
+            status_text, status_color = localization.status_active, ft.Colors.GREEN_700
+        else:
+            status_text, status_color = localization.status_finished, ft.Colors.GREY_700
+
+        # Баланс: оплачено минус начислено на сегодня (минус = долг)
+        balance = paid - self._amount_due(rental)
+
+        # Дата следующего платежа: следующий период после полностью оплаченных
+        next_payment = None
+        if data["price"] > 0 and today <= end:
+            paid_periods = paid // data["price"]
+            candidate = start + timedelta(days=(paid_periods) * data["period"])
+            if candidate < end:
+                next_payment = candidate
+
+        def info_row(label: str, value: str, color: str | None = None) -> ft.Row:
+            return ft.Row(
+                [
+                    ft.Text(label, color=ft.Colors.ON_SURFACE_VARIANT),
+                    ft.Text(value, weight=ft.FontWeight.BOLD, color=color),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            )
+
+        # ---- Карточка автомобиля ----
+        car_card = self.create_car_card(car, car.images)
+
+        # car_card = ft.Card(
+        #     content=ft.Container(
+        #         padding=15,
+        #         on_click=lambda _: self.page.run_task(
+        #             self.page.push_route, f"/cars/{data['car_id']}"
+        #         ),
+        #         content=ft.Row(
+        #             [
+        #                 ft.Image(
+        #                     src=data["photo"],
+        #                     width=90,
+        #                     height=90,
+        #                     fit=ft.BoxFit.COVER,
+        #                     border_radius=10,
+        #                     error_content=ft.Icon(ft.Icons.DIRECTIONS_CAR, size=48),
+        #                 )
+        #                 if data["photo"]
+        #                 else ft.Icon(ft.Icons.DIRECTIONS_CAR, size=48),
+        #                 ft.Column(
+        #                     [
+        #                         ft.Text(
+        #                             data["car_title"],
+        #                             size=18,
+        #                             weight=ft.FontWeight.BOLD,
+        #                         ),
+        #                         ft.Text(data["plate"], size=16),
+        #                     ],
+        #                     spacing=4,
+        #                 ),
+        #             ],
+        #             spacing=15,
+        #         ),
+        #     )
+        # )
+
+        # ---- Карточка водителя ----
+        tenant_card = self.create_tenant_card(tenant)
+
+        # debt_color = ft.Colors.RED_700 if tenant_debt > 0 else ft.Colors.GREEN_700
+        # tenant_card = ft.Card(
+        #     content=ft.Container(
+        #         padding=15,
+        #         content=ft.Column(
+        #             [
+        #                 ft.Row(
+        #                     [
+        #                         ft.Icon(ft.Icons.PERSON, size=32),
+        #                         ft.Text(
+        #                             data["tenant_name"],
+        #                             size=18,
+        #                             weight=ft.FontWeight.BOLD,
+        #                         ),
+        #                     ]
+        #                 ),
+        #                 ft.TextButton(
+        #                     data["tenant_phone"],
+        #                     icon=ft.Icons.PHONE,
+        #                     url=f"tel:{data['tenant_phone']}",
+        #                 ),
+        #                 info_row(
+        #                     localization.current_debt,  # новый ключ
+        #                     f"{tenant_debt:.2f} {localization.currency}",
+        #                     debt_color,
+        #                 ),
+        #             ],
+        #             spacing=6,
+        #         ),
+        #     )
+        # )
+
+        # ---- Финансы ----
+        balance_color = ft.Colors.GREEN_700 if balance >= 0 else ft.Colors.RED_700
+        finance_card = ft.Card(
+            content=ft.Container(
+                padding=15,
+                content=ft.Column(
+                    [
+                        info_row(localization.status, status_text, status_color),
+                        info_row(localization.start, f"{start:%d.%m.%Y}"),
+                        info_row(localization.end, f"{end:%d.%m.%Y}"),
+                        info_row(
+                            localization.balance,  # новый ключ
+                            f"{balance:+.2f} {localization.currency}",
+                            balance_color,
+                        ),
+                        info_row(
+                            localization.total_cost,  # новый ключ
+                            f"{data['total']:.2f} {localization.currency}",
+                        ),
+                        info_row(
+                            localization.next_payment,  # новый ключ
+                            f"{next_payment:%d.%m.%Y}" if next_payment else "—",
+                        ),
+                    ],
+                    spacing=8,
+                ),
+            )
+        )
+
+        notes_block = (
+            ft.Text(data["notes"], italic=True) if data["notes"] else ft.Container()
+        )
+
+        # ---- Удаление с подтверждением ----
+        async def confirm_delete(e: ft.ControlEvent) -> None:
+            with session_factory() as db:
+                rental_to_delete = db.get(Rental, rental_id)
+                if rental_to_delete:
+                    db.delete(rental_to_delete)
+                    db.commit()
+            self.page.pop_dialog()
+            self.build_complete_snack_bar()
+            await self.page.push_route("/rentals")
+
+        def close_dialog(e: ft.ControlEvent) -> None:
+            self.page.pop_dialog()
+
+        delete_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(localization.delete_rental_title),  # новый ключ
+            content=ft.Text(localization.delete_rental_confirm),  # новый ключ
+            actions=[
+                ft.TextButton(localization.cancel, on_click=close_dialog),
+                ft.TextButton(
+                    localization.delete,
+                    on_click=confirm_delete,
+                    style=ft.ButtonStyle(color=ft.Colors.RED_500),
+                ),
+            ],
+        )
+
+        delete_button = ft.Button(
+            localization.delete,
+            icon=ft.Icons.DELETE,
+            bgcolor=ft.Colors.RED_500,
+            color=ft.Colors.WHITE,
+            on_click=lambda _: self.page.show_dialog(delete_dialog),
+        )
+
+        content = ft.Column(
+            [
+                ft.Text(
+                    f"📋 {localization.rental}", size=24, weight=ft.FontWeight.BOLD
+                ),
+                car_card,
+                tenant_card,
+                finance_card,
+                notes_block,
+                delete_button,
+            ],
+            spacing=15,
+        )
+        return ft.View(
+            route=f"/rentals/{rental_id}",
+            navigation_bar=self.get_nav_bar(3),
+            controls=[ft.Container(content=content, padding=20)],
+        )
+
+    @staticmethod
+    def _amount_due(rental: Rental) -> int:
+        """Amount that should have been paid by today under the rental tariff.
+
+        Counts every period that has already started, capped by the rental term.
+        """
+        today = date.today()
+        start = (
+            rental.start_date.date()
+            if isinstance(rental.start_date, datetime)
+            else rental.start_date
+        )
+        end = (
+            rental.end_date.date()
+            if isinstance(rental.end_date, datetime)
+            else rental.end_date
+        )
+        if today < start or rental.period <= 0:
+            return 0
+        total_periods = max((end - start).days // rental.period, 0)
+        started = (today - start).days // rental.period + 1
+        return rental.price_per_period * min(started, total_periods)
