@@ -53,14 +53,12 @@ class RentalBuilder(Builder):
                 fab=fab,
             )
 
+        cards = [self.create_rental_card(rental) for rental in rentals_list]
         rentals_content = ft.Container(
-            content=ft.Column(spacing=20),
+            content=ft.Column(cards, spacing=16),
             expand=True,
+            padding=ft.Padding(16, 8),
         )
-
-        for rental in rentals_list:
-            rental_card = self.create_rental_card(rental)
-            rentals_content.content.controls.append(rental_card)
 
         return ft.View(
             route="/rentals",
@@ -432,7 +430,7 @@ class RentalBuilder(Builder):
         next_payment = None
         if data["price"] > 0 and today <= end:
             paid_periods = paid // data["price"]
-            candidate = start + timedelta(days=(paid_periods) * data["period"])
+            candidate = start + timedelta(days=(int(paid_periods)) * data["period"])
             if candidate < end:
                 next_payment = candidate
 

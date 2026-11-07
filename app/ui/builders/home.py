@@ -23,7 +23,7 @@ class HomeBuilder(Builder):
 
         title = ft.AppBar(
             title=ft.Text(
-                localization.app_name,
+                localization.main_menu,
                 size=40,
                 weight=ft.FontWeight.BOLD,
             )
@@ -73,7 +73,7 @@ class HomeBuilder(Builder):
         cars_column = ft.Column(
             alignment=ft.Alignment.CENTER,
             horizontal_alignment=ft.Alignment.CENTER,
-            spacing=20,
+            spacing=10,
         )
 
         for car in last_added_cars:

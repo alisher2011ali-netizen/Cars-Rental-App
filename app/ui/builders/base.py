@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import flet as ft
 from core.models import Car, Payment, PaymentType, Rental, Tenant
 from services.connector import Connector
@@ -687,57 +689,196 @@ class Builder:
         )
 
     def create_rental_card(self, rental: Rental) -> ft.Container:
-        """Render a comprehensive contractual lease summary card.
+        """Render a rich, visually structured lease summary card.
+
+        Renders the contract status badge, vehicle, tenant, valid dates and
+        total income in a single compact card.
 
         Args:
             rental (Rental): Active or historical rental record.
 
         Returns:
-            ft.Container: Stylized lease card control.
+            ft.Container: Styled lease-card control.
         """
-        match rental.status.value:
+        status = rental.status.value
+        match status:
             case "active":
                 status_text = localization.active
                 status_color = ft.Colors.GREEN_500
+                badge_bg = ft.Colors.GREEN_50
             case "completed":
                 status_text = localization.completed
                 status_color = ft.Colors.BLACK_87
+                badge_bg = ft.Colors.GREY_100
             case "cancelled":
                 status_text = localization.cancelled
                 status_color = ft.Colors.RED_500
+                badge_bg = ft.Colors.RED_50
             case _:
                 status_text = localization.other
                 status_color = ft.Colors.GREY_500
+                badge_bg = ft.Colors.GREY_100
+
+        start_str = (
+            rental.start_date.strftime("%d.%m.%Y")
+            if isinstance(rental.start_date, datetime)
+            else str(rental.start_date)
+        )
+        end_str = (
+            rental.end_date.strftime("%d.%m.%Y")
+            if isinstance(rental.end_date, datetime)
+            else str(rental.end_date)
+        )
 
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Text(
-                        f"{localization.status}: {status_text}",
-                        size=16,
-                        color=status_color,
-                        weight=ft.FontWeight.BOLD,
+                    # Status badge
+                    ft.Container(
+                        content=ft.Text(
+                            f"{localization.status}: {status_text}",
+                            size=12,
+                            weight=ft.FontWeight.BOLD,
+                            color=status_color,
+                        ),
+                        bgcolor=badge_bg,
+                        padding=ft.Padding(4, 6),
+                        border_radius=6,
                     ),
-                    ft.Text(
-                        f"{localization.car}: {rental.car.brand} {rental.car.model} ({rental.car.plate_number})",
-                        size=14,
+                    ft.Divider(color=ft.Colors.OUTLINE_VARIANT, height=1),
+                    # Vehicle
+                    ft.Row(
+                        [
+                            ft.Icon(
+                                ft.Icons.DIRECTIONS_CAR,
+                                size=22,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                            ft.Column(
+                                [
+                                    ft.Text(
+                                        f"{rental.car.brand} {rental.car.model}",
+                                        size=16,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.ON_SURFACE,
+                                    ),
+                                    ft.Text(
+                                        f"Plate: {rental.car.plate_number}",
+                                        size=13,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
+                                ],
+                                spacing=2,
+                                expand=True,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.START,
+                        spacing=8,
                     ),
-                    ft.Text(
-                        f"{localization.tenant}: {rental.tenant.name} ({rental.tenant.phone_number})",
-                        size=14,
+                    # Tenant
+                    ft.Row(
+                        [
+                            ft.Icon(
+                                ft.Icons.PERSON,
+                                size=22,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                            ft.Column(
+                                [
+                                    ft.Text(
+                                        rental.tenant.name,
+                                        size=16,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.ON_SURFACE,
+                                    ),
+                                    ft.Text(
+                                        rental.tenant.phone_number,
+                                        size=13,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
+                                ],
+                                spacing=2,
+                                expand=True,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.START,
+                        spacing=8,
                     ),
-                    ft.Text(
-                        f"{localization.income_in_total}: {rental.total_cost} {localization.currency}"
+                    # Dates
+                    ft.Row(
+                        [
+                            ft.Column(
+                                [
+                                    ft.Text(
+                                        f"{localization.start}:",
+                                        size=12,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
+                                    ft.Text(
+                                        start_str,
+                                        size=14,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.ON_SURFACE,
+                                    ),
+                                ],
+                                spacing=1,
+                                expand=True,
+                            ),
+                            ft.Icon(
+                                ft.Icons.ARROW_FORWARD,
+                                size=18,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                            ft.Column(
+                                [
+                                    ft.Text(
+                                        f"{localization.end}:",
+                                        size=12,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
+                                    ft.Text(
+                                        end_str,
+                                        size=14,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.ON_SURFACE,
+                                    ),
+                                ],
+                                spacing=1,
+                                expand=True,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        spacing=6,
                     ),
-                    ft.Text(
-                        f"{localization.start}: {rental.start_date}",
-                        size=14,
+                    # Total income
+                    ft.Row(
+                        [
+                            ft.Icon(
+                                ft.Icons.ATTACH_MONEY,
+                                size=20,
+                                color=ft.Colors.GREEN_500,
+                            ),
+                            ft.Text(
+                                f"{localization.income_in_total}: {format(rental.total_cost, '.2f')} {localization.currency}",
+                                size=14,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.ON_SURFACE,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.START,
+                        spacing=8,
                     ),
-                    ft.Text(f"{localization.end}: {rental.end_date}", size=14),
                 ],
-                spacing=5,
+                spacing=0,
             ),
-            padding=15,
-            border_radius=12,
-            shadow=True,
+            padding=14,
+            bgcolor=ft.Colors.SURFACE_CONTAINER,
+            border_radius=14,
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=12,
+                color=ft.Colors.SHADOW,
+                offset=ft.Offset(0, 6),
+                blur_style=ft.BlurStyle.NORMAL,
+            ),
         )
