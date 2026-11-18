@@ -6,10 +6,10 @@ from ui.builders import (
     Builder,
     CarBuilder,
     FinanceBuilder,
-    FirstLaunchBuilder,
     HomeBuilder,
     RentalBuilder,
     TenantBuilder,
+    WelcomeBuilder,
 )
 
 logger = logging.getLogger(__name__)
@@ -19,14 +19,6 @@ class UIRouter:
     """Manage application routing, view transitions, and route-level error handling."""
 
     def __init__(self, page: ft.Page) -> None:
-        """Initialize the router with the target root page and view builders.
-
-        Args:
-            page (ft.Page): The root page container provided by the Flet runtime.
-
-        Returns:
-            None: Initializes router components.
-        """
         self.page = page
         self.builder = Builder(self.page)
         self.ROOT_ROUTES = {
@@ -39,21 +31,15 @@ class UIRouter:
         }
 
     async def build(self) -> None:
-        """Bootstrap page configurations, register routing handlers, and render the initial view.
+        """Bootstrap page configurations, register routing handlers, and render the initial view."""
 
-        Args:
-            None
-
-        Returns:
-            None: Asynchronously updates the UI view tree.
-        """
         self.page.title = "Cars Rental App"
         self.page.on_route_change = self.route_change
         self.page.navigation_bar = self.builder.get_nav_bar(0)
         try:
             # Check for non-False values to treat an unset preference key (None) as a first-launch event
             if await self.builder.prefs.get("is_first_launch") != False:
-                fisrt_launch_builder = FirstLaunchBuilder(self.page)
+                fisrt_launch_builder = WelcomeBuilder(self.page)
                 await self.builder.prefs.set("is_first_launch", True)
                 view = fisrt_launch_builder.build_first_launch_view()
 
@@ -70,16 +56,8 @@ class UIRouter:
         self.page.update()
 
     def route_change(self, e: ft.RouteChangeEvent) -> None:
-        """Resolve route transitions and update the visible page view.
+        """Catch route transitions and update the visible page view."""
 
-        Args:
-            e (ft.RouteChangeEvent): Route change event containing the target URI.
-
-        Returns:
-            None: Dispatches route matching and replaces current views.
-        """
-        # Если мы вернулись назад через view_pop, целевой маршрут уже на вершине стека.
-        # Ничего не перерисовываем заново, просто обновляем страницу.
         if self.page.views and self.page.views[-1].route == e.route:
             self.page.update()
             return
@@ -103,7 +81,7 @@ class UIRouter:
                     case "/":
                         view = HomeBuilder(self.page).build_home_view()
                     case "/first_launch":
-                        view = FirstLaunchBuilder(self.page).build_first_launch_view()
+                        view = WelcomeBuilder(self.page).build_first_launch_view()
                     case "/cars":
                         view = CarBuilder(self.page).build_cars_view()
                     case "/tenants":
@@ -150,15 +128,8 @@ class UIRouter:
             self.page.go(top_view.route)
 
     def _build_error_view(self, ex_str: str, route: str) -> ft.View:
-        """Construct a standardized fallback view displaying routing or runtime errors.
+        """Build the error view with information about exception."""
 
-        Args:
-            ex_str (str): String representation of the captured exception.
-            route (str): Target navigation route where the failure occurred.
-
-        Returns:
-            ft.View: Dedicated error view container presenting failure diagnostics.
-        """
         error_content = ft.Container(
             content=ft.Column(
                 [

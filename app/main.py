@@ -8,14 +8,7 @@ from ui.router import UIRouter
 
 
 async def main(page: ft.Page) -> None:
-    """Initialize core services and launch the main application interface.
-
-    Args:
-        page (ft.Page): The root page container provided by the Flet runtime.
-
-    Returns:
-        None: This function does not return a value.
-    """
+    """Initialize core services and launch the main application interface."""
     try:
         logger = logging.getLogger(__name__)
 

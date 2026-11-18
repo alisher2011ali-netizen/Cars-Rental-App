@@ -13,28 +13,13 @@ class Builder:
         self,
         page: ft.Page,
     ) -> None:
-        """Initialize the builder with the root page, preferences, and data connectors.
-
-        Args:
-            page (ft.Page): The root page container provided by the Flet runtime.
-
-        Returns:
-            None: Initializes UI construction utilities.
-        """
         self.page = page
         self.prefs = ft.SharedPreferences()
         self.connector = Connector()
         self.current_image_indices = {}
 
     def get_nav_bar(self, current_index: int) -> ft.NavigationBar:
-        """Build the global bottom navigation bar with localized destination tabs.
-
-        Args:
-            current_index (int): Index of the currently active navigation item.
-
-        Returns:
-            ft.NavigationBar: Configured bottom navigation bar control.
-        """
+        """Build the global bottom navigation bar with localized destination tabs."""
         return ft.NavigationBar(
             destinations=[
                 ft.NavigationBarDestination(
@@ -59,14 +44,6 @@ class Builder:
         )
 
     async def _handle_nav_change(self, e: ft.ControlEvent) -> None:
-        """Dispatch route navigation corresponding to the selected navigation destination.
-
-        Args:
-            e (ft.ControlEvent): Navigation bar item selection event.
-
-        Returns:
-            None: Asynchronously pushes the matched route onto the navigation stack.
-        """
         match e.control.selected_index:
             case 0:
                 await self.page.push_route("/")
@@ -91,27 +68,11 @@ class Builder:
     def create_car_card(
         self, car: Car, car_images: list[str] | None = None
     ) -> ft.Container:
-        """Render a vehicle summary card featuring swipeable photos and plate badges.
-
-        Args:
-            car (Car): Vehicle model instance containing attributes to display.
-            car_images (list[str] | None): Image sources for carousel display. Defaults to None.
-
-        Returns:
-            ft.Container: Configured interactive container card for the vehicle.
-        """
+        """Create a vehicle card."""
         car_images = car_images or []
         self.current_image_indices[car.id] = 0
 
         async def go_to_details(e: ft.ControlEvent) -> None:
-            """Navigate to the detailed inspection view of the current car.
-
-            Args:
-                e (ft.ControlEvent): Interaction event from card tap or button click.
-
-            Returns:
-                None: Asynchronously routes to the detail view.
-            """
             await self.page.push_route(f"/cars/{car.id}")
 
         plate_badge = ft.Container(
@@ -174,26 +135,10 @@ class Builder:
             threshold = 40.0
 
             def on_horizontal_drag_start(e: ft.DragStartEvent) -> None:
-                """Reset drag accumulation and gesture lock on touch contact.
-
-                Args:
-                    e (ft.DragStartEvent): Gesture start event parameters.
-
-                Returns:
-                    None: Resets internal drag tracking state.
-                """
                 drag_state["accumulated_delta"] = 0.0
                 drag_state["swiped"] = False
 
             def on_horizontal_drag_update(e: ft.DragUpdateEvent) -> None:
-                """Accumulate swipe travel and trigger image change once the threshold is crossed.
-
-                Args:
-                    e (ft.DragUpdateEvent): Drag update event containing step delta.
-
-                Returns:
-                    None: Mutates current slide index and updates display controls.
-                """
                 if drag_state["swiped"]:
                     return
 
@@ -207,14 +152,6 @@ class Builder:
                     drag_state["swiped"] = True
 
             def on_horizontal_drag_end(e: ft.DragEndEvent) -> None:
-                """Clean up swipe lock when the pointer leaves the control surface.
-
-                Args:
-                    e (ft.DragEndEvent): Drag completion event.
-
-                Returns:
-                    None: Clears gesture lock.
-                """
                 drag_state["accumulated_delta"] = 0.0
                 drag_state["swiped"] = False
 
@@ -329,21 +266,16 @@ class Builder:
             indicator.value = f"{current}/{len(images)}"
             indicator.update()
 
-    def build_complete_snack_bar(self) -> ft.SnackBar:
-        """Construct a standardized success notification snackbar.
-
-        Args:
-            None
-
-        Returns:
-            ft.SnackBar: Preconfigured visible snackbar control.
-        """
+    def build_snack_bar(self, text: str) -> ft.SnackBar:
         return ft.SnackBar(
-            content=ft.Text(localization.added_successfully),
+            content=ft.Text(text),
             action=ft.SnackBarAction(label="OK"),
             duration=ft.Duration(seconds=5),
             open=True,
         )
+
+    def get_complete_snack_bar(self) -> ft.SnackBar:
+        return self.build_snack_bar(localization.added_successfully)
 
     def build_not_data_view(
         self,
@@ -356,21 +288,8 @@ class Builder:
         nav_bar_idx: int,
         fab: ft.FloatingActionButton,
     ) -> ft.View:
-        """Assemble an empty-state scaffold view prompting user creation actions.
+        """Build an empty-state view/"""
 
-        Args:
-            title (ft.Control): Header or app bar title control.
-            icon (ft.Icon): Central descriptive placeholder icon.
-            text (str): Localized empty-state prompt text.
-            button_text (str): Localized label for the call-to-action button.
-            button_route (str): Target route navigated upon action button click.
-            route (str): Current view navigation route identifier.
-            nav_bar_idx (int): Selected navigation bar item index.
-            fab (ft.FloatingActionButton): Contextual action button control.
-
-        Returns:
-            ft.View: Configured empty-state view.
-        """
         return ft.View(
             route=route,
             navigation_bar=self.get_nav_bar(nav_bar_idx),
@@ -413,15 +332,6 @@ class Builder:
         )
 
     def build_fab(self, route: str, text: str) -> ft.FloatingActionButton:
-        """Construct a standardized Floating Action Button triggering route navigation.
-
-        Args:
-            route (str): Target route to navigate to on button click.
-            text (str): Tooltip text explaining the button's action.
-
-        Returns:
-            ft.FloatingActionButton: Ready-to-attach floating action button.
-        """
         return ft.FloatingActionButton(
             icon=ft.Icons.ADD,
             on_click=lambda _: self.page.run_task(self.page.push_route, route),
@@ -438,14 +348,7 @@ class Builder:
         )
 
     def create_tenant_card(self, tenant: Tenant) -> ft.Container:
-        """Build an interactive contact card displaying tenant details and avatar.
-
-        Args:
-            tenant (Tenant): Tenant entity instance containing profile information.
-
-        Returns:
-            ft.Container: Configured tenant presentation card.
-        """
+        """Create a tenant card."""
 
         def on_phone_number_tap(tenant_phone: str) -> None:
             self.page.clipboard.set(tenant_phone)
@@ -527,14 +430,6 @@ class Builder:
         )
 
     def create_payment_card(self, payment: Payment) -> ft.Container:
-        """Format and construct a transaction card tailored to parsing provenance.
-
-        Args:
-            payment (Payment): Payment entity with financial and provenance attributes.
-
-        Returns:
-            ft.Container: Configured transaction presentation card.
-        """
         payment_type = "+" if payment.type == PaymentType.income else "-"
 
         text_color = (
@@ -563,17 +458,7 @@ class Builder:
         formatted_amount: str,
         text_color: ft.ColorValue,
     ) -> ft.Container:
-        """Render a financial card for manually entered payment records.
-
-        Args:
-            payment (Payment): Transaction data source model.
-            payment_type (str): Sign indicator symbol ('+' or '-').
-            formatted_amount (str): Formatted monetary amount string.
-            text_color (ft.ColorValue): Design token representing flow direction.
-
-        Returns:
-            ft.Container: Finished card layout control.
-        """
+        """Create a financial card for manual payments."""
         return ft.Container(
             content=ft.Column(
                 [
@@ -619,17 +504,7 @@ class Builder:
         formatted_amount: str,
         text_color: ft.ColorValue,
     ) -> ft.Container:
-        """Render a specialized financial card displaying bank statement metadata.
-
-        Args:
-            payment (Payment): Statement payment model instance.
-            payment_type (str): Sign indicator symbol ('+' or '-').
-            formatted_amount (str): Formatted monetary amount string.
-            text_color (ft.ColorValue): Design token representing flow direction.
-
-        Returns:
-            ft.Container: Bank-specialized transaction card layout.
-        """
+        """Create a financial card displaying bank statement metadata."""
         op_date_str = (
             payment.operation_date.strftime("%d.%m.%Y %H:%M")
             if payment.operation_date
@@ -707,17 +582,7 @@ class Builder:
         )
 
     def create_rental_card(self, rental: Rental) -> ft.Container:
-        """Render a rich, visually structured lease summary card.
-
-        Renders the contract status badge, vehicle, tenant, valid dates and
-        total income in a single compact card.
-
-        Args:
-            rental (Rental): Active or historical rental record.
-
-        Returns:
-            ft.Container: Styled lease-card control.
-        """
+        """Render a rental card."""
         status = rental.status.value
         match status:
             case "active":

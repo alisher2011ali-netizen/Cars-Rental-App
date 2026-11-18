@@ -6,17 +6,11 @@ from ui.builders.base import Builder
 
 
 class FinanceBuilder(Builder):
-    """Build UI views and workflows for financial records and statement processing."""
+    """Build UI views for PAYMENTS."""
 
     def build_finances_view(self) -> ft.View:
-        """Construct the financial transactions overview screen with PDF import capabilities.
+        """Build the payments list view."""
 
-        Args:
-            None
-
-        Returns:
-            ft.View: View containing the list of parsed/manual payments or an empty state.
-        """
         db = session_factory()
 
         payments_list = db.scalars(select(Payment)).all()
@@ -38,14 +32,6 @@ class FinanceBuilder(Builder):
         file_picker = ft.FilePicker()
 
         async def pick_pdf_click(e: ft.ControlEvent) -> None:
-            """Open file picker to ingest a PDF bank statement and refresh the view on success.
-
-            Args:
-                e (ft.ControlEvent): Button click interaction event.
-
-            Returns:
-                None: Triggers parsing and refreshes finances view if parsing succeeded.
-            """
             files = await file_picker.pick_files(
                 allow_multiple=False,
                 file_type=ft.FilePickerFileType.CUSTOM,
@@ -101,25 +87,10 @@ class FinanceBuilder(Builder):
         )
 
     def build_add_payment_view(self) -> ft.View:
-        """Construct the manual payment logging screen with input validation.
-
-        Args:
-            None
-
-        Returns:
-            ft.View: View containing form fields for logging transactions.
-        """
+        """Build the payment adding view."""
         db = session_factory()
 
         async def save_payment(e: ft.ControlEvent) -> None:
-            """Validate monetary inputs and persist a new payment transaction.
-
-            Args:
-                e (ft.ControlEvent): Form submit button interaction event.
-
-            Returns:
-                None: Validates input, writes to database, and navigates back.
-            """
             # Reject non-digit inputs before database persistence to prevent cast exceptions
             if not amount_input.value.isdigit():
                 amount_input.value = ""
@@ -141,7 +112,7 @@ class FinanceBuilder(Builder):
             db.add(new_payment)
             db.commit()
 
-            self.page.overlay.append(self.build_complete_snack_bar())
+            self.page.overlay.append(self.get_complete_snack_bar())
             await self.page.push_route("/finances")
 
         amount_input = ft.TextField(label=localization.amount, width=300)

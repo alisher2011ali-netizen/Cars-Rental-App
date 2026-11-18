@@ -1,6 +1,6 @@
-import sys
 import os
 import pprint
+import sys
 
 from app.parsing.parser import process_sber_pdf
 

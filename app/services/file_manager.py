@@ -13,15 +13,6 @@ class FileManager:
         pass
 
     def save_file(self, file_data: bytes, file_path: str) -> str:
-        """Write raw binary payloads to the specified filesystem target.
-
-        Args:
-            file_data (bytes): Raw binary content to persist.
-            file_path (str): Relative or absolute destination target path.
-
-        Returns:
-            str: Destination path where the file was written.
-        """
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
         with open(file_path, "wb") as f:
             f.write(file_data)
@@ -30,15 +21,6 @@ class FileManager:
         return file_path
 
     def copy_file(self, source_path: str, destination_path: str) -> str:
-        """Copy a file from source to target location preserving metadata.
-
-        Args:
-            source_path (str): Origin file location.
-            destination_path (str): Destination file location.
-
-        Returns:
-            str: Target path where the file was copied.
-        """
         Path(destination_path).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, destination_path)
 
@@ -46,14 +28,6 @@ class FileManager:
         return destination_path
 
     def get_file(self, file_path: str) -> bytes | None:
-        """Read and retrieve file contents as raw bytes if available.
-
-        Args:
-            file_path (str): Filesystem path to the desired resource.
-
-        Returns:
-            bytes | None: Raw file binary content if the file exists, otherwise None.
-        """
         if os.path.exists(file_path):
             with open(file_path, "rb") as f:
                 logger.info(f"Loaded file: {file_path}.")
@@ -63,14 +37,6 @@ class FileManager:
         return None
 
     def delete_file(self, file_path: str) -> bool:
-        """Remove a specified file from storage if present on disk.
-
-        Args:
-            file_path (str): Filesystem path of the file to remove.
-
-        Returns:
-            bool: Always returns True indicating operation completion.
-        """
         if os.path.exists(file_path):
             os.remove(file_path)
 

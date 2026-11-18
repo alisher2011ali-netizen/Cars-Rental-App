@@ -14,14 +14,7 @@ class TenantBuilder(Builder):
     """Build UI views and controls for tenant directory browsing and creation."""
 
     def build_tenants_view(self) -> ft.View:
-        """Construct the primary tenants listing view.
-
-        Args:
-            None
-
-        Returns:
-            ft.View: View containing the list of registered tenants or an empty placeholder.
-        """
+        """Build the tenants list view."""
         db = session_factory()
 
         stmt = select(Tenant).options(joinedload(Tenant.avatar))
@@ -75,14 +68,8 @@ class TenantBuilder(Builder):
         )
 
     def build_add_tenant_view(self) -> ft.View:
-        """Construct the tenant creation form view with document upload handlers.
+        """Build the tenant adding view."""
 
-        Args:
-            None
-
-        Returns:
-            ft.View: View containing input fields and file picker actions for registering a tenant.
-        """
         db = session_factory()
 
         paths = {
@@ -100,16 +87,6 @@ class TenantBuilder(Builder):
         def make_picker_callback(
             picker: ft.FilePicker, path_key: str
         ) -> Callable[[ft.ControlEvent], Coroutine[Any, Any, None]]:
-            """Generate an asynchronous file picker handler for a designated document category.
-
-            Args:
-                picker (ft.FilePicker): The target file picker control instance.
-                path_key (str): The state dictionary key where the picked file path should be stored.
-
-            Returns:
-                Callable[[ft.ControlEvent], Coroutine[Any, Any, None]]: An async event handler.
-            """
-
             async def callback(e: ft.ControlEvent) -> None:
                 files = await picker.pick_files(
                     allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
@@ -129,14 +106,6 @@ class TenantBuilder(Builder):
         )
 
         async def save_tenant(e: ft.ControlEvent | None = None) -> None:
-            """Persist the new tenant and copy all chosen identity documents to local storage.
-
-            Args:
-                e (ft.ControlEvent | None): Optional event triggered by the form submission button. Defaults to None.
-
-            Returns:
-                None: Commits records and redirects to the tenants catalog.
-            """
             new_tenant = Tenant(
                 name=name_input.value.strip(),
                 phone_number=phone_input.value,
@@ -159,7 +128,7 @@ class TenantBuilder(Builder):
                         db=db,
                     )
 
-            self.build_complete_snack_bar()
+            self.get_complete_snack_bar()
             await self.page.push_route("/tenants")
 
         name_input = ft.TextField(label=localization.fullname, width=300)
@@ -222,18 +191,7 @@ class TenantBuilder(Builder):
         self,
         tenant_id: int,
     ) -> ft.View:
-        """Build a comprehensive tenant details view.
-
-        Displays avatar, personal data, phone with clipboard copy,
-        debt status, next rental payment info, documents gallery with fullscreen mode,
-        and a direct navigation link to the active rental.
-
-        Args:
-            tenant_id (int): Identifier of the tenant to display.
-
-        Returns:
-            ft.View: Configured Flet View instance.
-        """
+        """Build a tenant details view."""
         db = session_factory()
 
         tenant = db.get(Tenant, tenant_id)
@@ -614,6 +572,7 @@ class TenantBuilder(Builder):
             self.page.update()
 
         async def delete_tenant_confirm(e):
+            # TODO: fix it so that EVERYTHING related is deleted
             confirm_tenant_dialog.open = False
             db.delete(tenant)
             db.commit()
@@ -645,6 +604,8 @@ class TenantBuilder(Builder):
             tooltip="Удалить водителя",
             on_click=open_tenant_delete_dialog,
         )
+
+        # TODO: больше функций редактирования как: добавить фото документа, удалить, изменить данные
 
         return ft.View(
             route=f"/tenants/{tenant_id}",

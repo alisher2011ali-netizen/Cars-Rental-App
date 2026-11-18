@@ -23,14 +23,6 @@ class Connector:
     """Coordinate database persistence, file management, and external data parsing."""
 
     def __init__(self) -> None:
-        """Initialize the connector with supporting utility services.
-
-        Args:
-            None
-
-        Returns:
-            None: Initializes service instances.
-        """
         self.file_manager = FileManager()
 
     async def save_image(
@@ -42,17 +34,8 @@ class Connector:
         category: str = "car_photo",
         db: Session | None = None,
     ) -> str:
-        """Store an uploaded image on disk and register its metadata in the database.
+        """Store an uploaded image on disk and register its metadata in the database."""
 
-        Args:
-            image_path (str): Filesystem path to the temporary source image.
-            object_id (int): Primary key of the entity associated with the image.
-            object_type (str): Domain entity discriminator ('car' or 'tenant').
-            category (str): Sub-category classification for the image. Defaults to 'car_photo'.
-
-        Returns:
-            str: Destination storage path if successfully saved, or an empty string on failure.
-        """
         if not db:
             db = session_factory()
 
@@ -83,14 +66,8 @@ class Connector:
             return ""
 
     def save_statement(self, file_path: str) -> bool:
-        """Parse an external bank PDF statement and persist all extracted payments.
+        """Parse an external bank PDF statement and persist all extracted payments."""
 
-        Args:
-            file_path (str): Filesystem path to the bank statement PDF file.
-
-        Returns:
-            bool: True if parsing and database insertion succeeded, False otherwise.
-        """
         db = session_factory()
 
         try:

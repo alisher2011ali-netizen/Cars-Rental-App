@@ -30,12 +30,10 @@ session_factory = sessionmaker(bind=engine)
 
 
 class Base(DeclarativeBase):
-    """Serve as the base class for declarative SQLAlchemy model definitions."""
+    pass
 
 
 class ImageCategory(str, enum.Enum):
-    """Categorize the purpose and document type of an uploaded image."""
-
     avatar = "avatar"
     passport = "passport"
     sub_passport = "sub_passport"
@@ -44,15 +42,11 @@ class ImageCategory(str, enum.Enum):
 
 
 class ImageObjectType(str, enum.Enum):
-    """Represent target domain entities that can be associated with an image."""
-
     car = "car"
     tenant = "tenant"
 
 
 class CarStatus(str, enum.Enum):
-    """Represent the operational availability status of a vehicle."""
-
     available = "available"
     rented = "rented"
     maintance = "maintance"
@@ -60,16 +54,12 @@ class CarStatus(str, enum.Enum):
 
 
 class RentalStatus(str, enum.Enum):
-    """Represent the lifecycle state of a vehicle rental contract."""
-
     active = "active"
     completed = "completed"
     cancelled = "cancelled"
 
 
 class PaymentType(str, enum.Enum):
-    """Classify the cash flow direction of a financial transaction."""
-
     income = "income"
     expense = "expense"
 
@@ -147,7 +137,6 @@ class Tenant(Base):
         name (str): Full legal name of the tenant.
         phone_number (str): Primary contact phone number.
         debt_sum (Decimal): Outstanding debt balance.
-        next_payment_due (datetime | None): Scheduled due date for the next payment.
         avatar (Image): Read-only reference to the tenant's profile avatar.
         passport (Image): Read-only reference to the tenant's primary passport page.
         sub_passport (Image): Read-only reference to the secondary passport/registration page.
@@ -164,7 +153,6 @@ class Tenant(Base):
 
     phone_number: Mapped[str] = mapped_column(String(20))
     debt_sum: Mapped[Decimal] = mapped_column(DECIMAL, default=Decimal(0))
-    next_payment_due: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     # Use explicit string interpolation in primaryjoin to filter by category and enforce 1-to-1 semantics
     avatar: Mapped["Image"] = relationship(

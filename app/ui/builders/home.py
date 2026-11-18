@@ -9,14 +9,8 @@ class HomeBuilder(Builder):
     """Build UI views and widgets for the primary dashboard and home screen."""
 
     def build_home_view(self) -> ft.View:
-        """Construct the main home view displaying recent vehicles or a placeholder.
+        """Build main view."""
 
-        Args:
-            None
-
-        Returns:
-            ft.View: View containing the dashboard layout, navigation bar, and recent cars.
-        """
         db = session_factory()
 
         last_added_cars = db.scalars(select(Car).order_by(Car.id.desc()).limit(5)).all()

@@ -6,18 +6,6 @@ from core.config import config
 
 
 def setup_logging() -> None:
-    """Configure rotating file logging for the application.
-
-    Create a dedicated 'logs' directory within the resolved storage path and attach
-    a rotating file handler with a 5 MB limit and up to 3 backup archives.
-
-    Args:
-        None
-
-    Returns:
-        None: Logging subsystem is configured in-place.
-    """
-
     logs_dir = os.path.join(config.app_data_path, "logs")
     log_file = os.path.join(logs_dir, "app.log")
 

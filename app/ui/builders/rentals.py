@@ -9,17 +9,10 @@ from ui.builders.base import Builder
 
 
 class RentalBuilder(Builder):
-    """Build UI views and workflows for managing car rental contracts."""
+    """Build UI views for RENTALS."""
 
     def build_rentals_view(self) -> ft.View:
-        """Construct the rentals list view displaying active and historical leases.
-
-        Args:
-            None
-
-        Returns:
-            ft.View: View containing rental cards or an empty-state screen.
-        """
+        """Build the rentals list view."""
         db = session_factory()
 
         rentals_list = db.scalars(select(Rental)).all()
@@ -70,14 +63,7 @@ class RentalBuilder(Builder):
         )
 
     def build_add_rental_view(self) -> ft.View:
-        """Construct the lease agreement creation view with dynamic tariff calculators.
-
-        Args:
-            None
-
-        Returns:
-            ft.View: View containing form fields for calculating and creating leases.
-        """
+        """Build the rental adding view."""
 
         # Загружаем данные и сразу закрываем сессию: в замыканиях держим только простые значения
         db = session_factory()
@@ -313,7 +299,7 @@ class RentalBuilder(Builder):
             )
             db.commit()
 
-            self.build_complete_snack_bar()
+            self.get_complete_snack_bar()
             await self.page.push_route("/rentals")
 
         save_button = ft.Button(
@@ -350,14 +336,7 @@ class RentalBuilder(Builder):
         )
 
     def build_rental_details_view(self, rental_id: int) -> ft.View:
-        """Construct the rental details view with car, tenant and finance blocks.
-
-        Args:
-            rental_id (int): Primary key of the rental to display.
-
-        Returns:
-            ft.View: Details view, or the rentals list if the record does not exist.
-        """
+        """Construct the rental details view."""
         with session_factory() as db:
             rental = db.get(Rental, rental_id)
             if rental is None:
@@ -564,7 +543,7 @@ class RentalBuilder(Builder):
                     db.delete(rental_to_delete)
                     db.commit()
             self.page.pop_dialog()
-            self.build_complete_snack_bar()
+            self.get_complete_snack_bar()
             await self.page.push_route("/rentals")
 
         def close_dialog(e: ft.ControlEvent) -> None:

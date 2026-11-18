@@ -6,17 +6,10 @@ from ui.builders.base import Builder
 
 
 class CarBuilder(Builder):
-    """Build UI views and controls for car inventory management and detailed displays."""
+    """Build UI views for CARS."""
 
     def build_cars_view(self) -> ft.View:
-        """Construct the primary vehicles catalog view.
-
-        Args:
-            None
-
-        Returns:
-            ft.View: View displaying the list of registered vehicles or an empty placeholder.
-        """
+        """Build the cars list view."""
         db = session_factory()
 
         cars_list = db.scalars(select(Car)).all()
@@ -83,14 +76,7 @@ class CarBuilder(Builder):
         )
 
     def build_add_car_view(self) -> ft.View:
-        """Construct the registration form view for adding a new vehicle.
-
-        Args:
-            None
-
-        Returns:
-            ft.View: View containing input fields and file upload triggers for vehicle creation.
-        """
+        """Build the vehicle adding view."""
         db = session_factory()
 
         selected_images_paths = []
@@ -98,14 +84,6 @@ class CarBuilder(Builder):
         file_picker = ft.FilePicker()
 
         async def pick_image_click(e: ft.ControlEvent) -> None:
-            """Launch the system file picker to select vehicle images.
-
-            Args:
-                e (ft.ControlEvent): Button click interaction event.
-
-            Returns:
-                None: Appends picked file paths to the local staging list.
-            """
             files = await file_picker.pick_files(
                 allow_multiple=True, file_type=ft.FilePickerFileType.IMAGE
             )
@@ -114,14 +92,7 @@ class CarBuilder(Builder):
                     selected_images_paths.append(file.path)
 
         async def save_car(e: ft.ControlEvent | None = None) -> None:
-            """Persist the entered vehicle attributes and copy associated photos to storage.
-
-            Args:
-                e (ft.ControlEvent | None): Optional triggering control event. Defaults to None.
-
-            Returns:
-                None: Commits record to database and navigates back to the inventory list.
-            """
+            """Persist the entered vehicle attributes and copy associated photos to storage."""
             try:
                 year = int(year_input.value.strip())
             except ValueError:
@@ -148,7 +119,7 @@ class CarBuilder(Builder):
                     image_path=image_path, object_id=new_car.id, object_type="car"
                 )
 
-            self.build_complete_snack_bar()
+            self.get_complete_snack_bar()
             await self.page.push_route("/cars")
 
         brand_input = ft.TextField(label=localization.brand, width=300)
@@ -193,14 +164,7 @@ class CarBuilder(Builder):
         )
 
     def build_car_details_view(self, car_id: int) -> ft.View:
-        """Construct the detailed vehicle view with full-screen gallery inspection.
-
-        Args:
-            car_id (int): Primary key of the car to display.
-
-        Returns:
-            ft.View: View containing vehicle specs, media carousel, and active rental shortcuts.
-        """
+        """Construct the detailed vehicle view."""
         db = session_factory()
 
         car = db.get(Car, car_id)
@@ -233,14 +197,6 @@ class CarBuilder(Builder):
         )
 
         def update_gallery() -> None:
-            """Synchronize gallery image source and counter text with current index.
-
-            Args:
-                None
-
-            Returns:
-                None: Updates gallery controls on the screen.
-            """
             if car_images:
                 gallery_img.src = car_images[current_index[0]].path
                 gallery_counter.value = f"{current_index[0] + 1} / {len(car_images)}"
@@ -248,53 +204,22 @@ class CarBuilder(Builder):
                 gallery_counter.update()
 
         def close_gallery(e: ft.ControlEvent) -> None:
-            """Hide the full-screen gallery overlay.
-
-            Args:
-                e (ft.ControlEvent): Control interaction event.
-
-            Returns:
-                None: Sets overlay visibility to False and updates the page.
-            """
             gallery_overlay.visible = False
             self.page.update()
 
         def next_img(e: ft.ControlEvent) -> None:
-            """Advance to the next image in the full-screen gallery.
-
-            Args:
-                e (ft.ControlEvent): Forward button interaction event.
-
-            Returns:
-                None: Increments index within bounds and updates display.
-            """
             if current_index[0] < len(car_images) - 1:
                 current_index[0] += 1
                 update_gallery()
 
         def prev_img(e: ft.ControlEvent) -> None:
-            """Step back to the preceding image in the full-screen gallery.
-
-            Args:
-                e (ft.ControlEvent): Backward button interaction event.
-
-            Returns:
-                None: Decrements index within bounds and updates display.
-            """
             if current_index[0] > 0:
                 current_index[0] -= 1
                 update_gallery()
 
         def delete_img(e: ft.ControlEvent) -> None:
-            """Trigger the image removal flow and close the overlay.
-
-            Args:
-                e (ft.ControlEvent): Delete button click event.
-
-            Returns:
-                None: Dismisses gallery overlay pending deletion implementation.
-            """
             close_gallery(e)
+            # TODO: delete image
 
         gallery_overlay = ft.Container(
             content=ft.Stack(
@@ -361,15 +286,7 @@ class CarBuilder(Builder):
             self.page.overlay.append(gallery_overlay)
 
         def open_gallery(e: ft.ControlEvent, index: int) -> None:
-            """Display the modal gallery starting at the targeted image index.
-
-            Args:
-                e (ft.ControlEvent): Tap event from thumbnail.
-                index (int): Position of the selected image.
-
-            Returns:
-                None: Opens modal overlay and redraws host page.
-            """
+            """Display the modal gallery."""
             if not car_images:
                 return
             current_index[0] = index
@@ -439,6 +356,7 @@ class CarBuilder(Builder):
             self.page.update()
 
         async def delete_car_confirm(e):
+            # TODO: fix it so that EVERYTHING related is deleted
             confirm_car_dialog.open = False
             db.delete(car)
             db.commit()
@@ -470,6 +388,8 @@ class CarBuilder(Builder):
             tooltip="Удалить авто",
             on_click=open_car_delete_dialog,
         )
+
+        # TODO: больше функций редактирования
 
         return ft.View(
             route=f"/cars/{car_id}",
