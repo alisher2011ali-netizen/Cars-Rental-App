@@ -4,6 +4,7 @@ import flet as ft
 from core.models import Car, Payment, Rental, Tenant, session_factory
 from services.localization import localization
 from sqlalchemy import func, select
+from sqlalchemy.orm import joinedload
 from ui.builders.base import Builder
 
 
@@ -335,9 +336,10 @@ class RentalBuilder(Builder):
                 notes_field,
                 form_error,
                 save_button,
+                self.get_back_button(),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
-            spacing=20,
+            spacing=10,
         )
         return ft.View(
             route="/add_rental",
@@ -368,7 +370,12 @@ class RentalBuilder(Builder):
                 return self.build_rentals_view()
 
             car = db.get(Car, rental.car_id)
-            tenant = db.get(Tenant, rental.tenant_id)
+            stmt = (
+                select(Tenant)
+                .where(Tenant.id == rental.tenant_id)
+                .options(joinedload(Tenant.avatar))
+            )
+            tenant = db.scalar(stmt)
 
             # ASSUMPTION: модель платежей Payment с полями rental_id, tenant_id, amount
             paid = db.scalar(

@@ -194,6 +194,7 @@ class FinanceBuilder(Builder):
                     type_dropdown,
                     error_container,
                     save_button,
+                    self.get_back_button(),
                 ],
             ),
             padding=40,

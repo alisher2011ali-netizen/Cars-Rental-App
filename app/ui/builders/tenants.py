@@ -1,10 +1,12 @@
 from collections.abc import Callable, Coroutine
+from datetime import datetime, timedelta
 from typing import Any
 
 import flet as ft
 from core.models import Tenant, session_factory
 from services.localization import localization
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from ui.builders.base import Builder
 
 
@@ -22,7 +24,8 @@ class TenantBuilder(Builder):
         """
         db = session_factory()
 
-        tenants_list = db.scalars(select(Tenant)).all()
+        stmt = select(Tenant).options(joinedload(Tenant.avatar))
+        tenants_list = db.scalars(stmt)
         fab = self.build_fab("/add_tenant", localization.add_tenant)
         title = ft.AppBar(
             leading=ft.Icon(
@@ -163,6 +166,7 @@ class TenantBuilder(Builder):
 
         phone_input = ft.TextField(label=localization.phone, width=300)
         debt_sum_input = ft.TextField(label=localization.debt_in_total, width=300)
+
         input = ft.Container(
             content=ft.Column(
                 [
@@ -201,13 +205,7 @@ class TenantBuilder(Builder):
                         icon=ft.Icons.SAVE,
                         on_click=save_tenant,
                     ),
-                    ft.Button(
-                        localization.back,
-                        icon=ft.Icons.ARROW_BACK,
-                        on_click=lambda _: self.page.run_task(
-                            self.page.push_route, "/tenants"
-                        ),
-                    ),
+                    self.get_back_button(),
                 ],
                 spacing=15,
             ),
@@ -405,8 +403,9 @@ class TenantBuilder(Builder):
             self.page.update()
 
         # --- 3. Информация о водителе ---
-        def copy_phone(e) -> None:
-            ft.CopyToClipboard(tenant.phone_number)
+        async def copy_phone(e) -> None:
+            clipboard = ft.Clipboard()
+            await clipboard.set(tenant.phone_number)
             snack = ft.SnackBar(ft.Text(localization.copied), open=True)
             self.page.overlay.append(snack)
 
@@ -472,16 +471,33 @@ class TenantBuilder(Builder):
             )
 
         # Расчет / вывод следующей выплаты
+        def get_next_payment_date(
+            start_date: datetime, end_date: datetime, period_days: int
+        ) -> datetime | None:
+            today = datetime.now()
+
+            if today >= end_date:
+                return None
+
+            if today < start_date:
+                return start_date
+
+            days_passed = (today - start_date).days
+            next_period_number = (days_passed // period_days) + 1
+            next_date = start_date + timedelta(days=next_period_number * period_days)
+
+            if next_date >= end_date:
+                return None
+
+            return next_date
+
         next_payment_control = ft.Container()
         if active_rental:
-            next_date = getattr(active_rental, "next_payment_date", None) or getattr(
-                active_rental, "end_date", None
+            next_date = get_next_payment_date(
+                active_rental.start_date, active_rental.end_date, active_rental.period
             )
-            next_date_str = (
-                next_date.strftime("%d.%m.%Y")
-                if hasattr(next_date, "strftime")
-                else str(next_date or "—")
-            )
+
+            next_date_str = next_date.strftime("%d.%m.%Y")
             next_payment_control = ft.Container(
                 content=ft.Row(
                     [
@@ -634,12 +650,7 @@ class TenantBuilder(Builder):
             route=f"/tenants/{tenant_id}",
             controls=[
                 ft.AppBar(
-                    leading=ft.IconButton(
-                        ft.Icons.ARROW_BACK,
-                        on_click=lambda _: self.page.run_task(
-                            self.page.push_route, "/tenants"
-                        ),
-                    ),
+                    leading=ft.IconButton(ft.Icons.ARROW_BACK, on_click=self.go_back),
                     title=ft.Text(
                         localization.tenant_details,
                         size=20,

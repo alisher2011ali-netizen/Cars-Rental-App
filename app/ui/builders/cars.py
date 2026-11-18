@@ -178,13 +178,7 @@ class CarBuilder(Builder):
                         icon=ft.Icons.SAVE,
                         on_click=save_car,
                     ),
-                    ft.Button(
-                        localization.back,
-                        icon=ft.Icons.ARROW_BACK,
-                        on_click=lambda _: self.page.run_task(
-                            self.page.push_route, "/cars"
-                        ),
-                    ),
+                    self.get_back_button(),
                 ],
                 spacing=15,
             ),
@@ -482,12 +476,7 @@ class CarBuilder(Builder):
             controls=[
                 ft.AppBar(
                     title=ft.Text(f"{localization.car_details} #{car_id}"),
-                    leading=ft.IconButton(
-                        ft.Icons.ARROW_BACK,
-                        on_click=lambda _: self.page.run_task(
-                            self.page.push_route, "/cars"
-                        ),
-                    ),
+                    leading=ft.IconButton(ft.Icons.ARROW_BACK, on_click=self.go_back),
                     actions=[delete_car_button],
                 ),
                 ft.Container(

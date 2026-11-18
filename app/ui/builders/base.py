@@ -79,6 +79,15 @@ class Builder:
             case 4:
                 await self.page.push_route("/finances")
 
+    async def go_back(self, e=None) -> None:
+        """Возвращает на предыдущий экран из истории или на главную, если история пуста."""
+        if len(self.page.views) > 1:
+            self.page.views.pop()
+            top_view = self.page.views[-1]
+            await self.page.push_route(top_view.route)
+        else:
+            await self.page.push_route("/")
+
     def create_car_card(
         self, car: Car, car_images: list[str] | None = None
     ) -> ft.Container:
@@ -417,6 +426,15 @@ class Builder:
             icon=ft.Icons.ADD,
             on_click=lambda _: self.page.run_task(self.page.push_route, route),
             tooltip=ft.Tooltip(text),
+        )
+
+    def get_back_button(self) -> ft.Button:
+        return (
+            ft.Button(
+                localization.back,
+                icon=ft.Icons.ARROW_BACK,
+                on_click=self.go_back,
+            ),
         )
 
     def create_tenant_card(self, tenant: Tenant) -> ft.Container:
@@ -763,7 +781,7 @@ class Builder:
                                         color=ft.Colors.ON_SURFACE,
                                     ),
                                     ft.Text(
-                                        f"Plate: {rental.car.plate_number}",
+                                        f"{localization.plate_number} {rental.car.plate_number}",
                                         size=13,
                                         color=ft.Colors.ON_SURFACE_VARIANT,
                                     ),

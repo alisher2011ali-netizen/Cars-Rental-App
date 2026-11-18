@@ -5,6 +5,7 @@ Cars-Rental-App.code-workspace
 *.diff
 .vscode/
 images/
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

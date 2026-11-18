@@ -29,6 +29,14 @@ class UIRouter:
         """
         self.page = page
         self.builder = Builder(self.page)
+        self.ROOT_ROUTES = {
+            "/",
+            "/first_launch",
+            "/cars",
+            "/tenants",
+            "/rentals",
+            "/finances",
+        }
 
     async def build(self) -> None:
         """Bootstrap page configurations, register routing handlers, and render the initial view.
@@ -70,68 +78,76 @@ class UIRouter:
         Returns:
             None: Dispatches route matching and replaces current views.
         """
+        # Если мы вернулись назад через view_pop, целевой маршрут уже на вершине стека.
+        # Ничего не перерисовываем заново, просто обновляем страницу.
+        if self.page.views and self.page.views[-1].route == e.route:
+            self.page.update()
+            return
+
         troute = ft.TemplateRoute(e.route)
+        is_root_route = e.route in self.ROOT_ROUTES
 
         try:
-            # Use regex pattern matching in template routes to safely extract numeric domain IDs
             if troute.match("/cars/:id(\\d+)"):
-                car_builder = CarBuilder(self.page)
-                view = car_builder.build_car_details_view(int(troute.id))
-
+                view = CarBuilder(self.page).build_car_details_view(int(troute.id))
             elif troute.match("/tenants/:id(\\d+)"):
-                tenant_builder = TenantBuilder(self.page)
-                view = tenant_builder.build_tenant_details_view(int(troute.id))
-
+                view = TenantBuilder(self.page).build_tenant_details_view(
+                    int(troute.id)
+                )
             elif troute.match("/rentals/:id(\\d+)"):
-                rental_builder = RentalBuilder(self.page)
-                view = rental_builder.build_rental_details_view(int(troute.id))
-
+                view = RentalBuilder(self.page).build_rental_details_view(
+                    int(troute.id)
+                )
             else:
                 match e.route:
                     case "/":
-                        home_builder = HomeBuilder(self.page)
-                        view = home_builder.build_home_view()
+                        view = HomeBuilder(self.page).build_home_view()
                     case "/first_launch":
-                        first_launch_builder = FirstLaunchBuilder(self.page)
-                        view = first_launch_builder.build_first_launch_view()
+                        view = FirstLaunchBuilder(self.page).build_first_launch_view()
                     case "/cars":
-                        car_builder = CarBuilder(self.page)
-                        view = car_builder.build_cars_view()
+                        view = CarBuilder(self.page).build_cars_view()
                     case "/tenants":
-                        tenant_builder = TenantBuilder(self.page)
-                        view = tenant_builder.build_tenants_view()
+                        view = TenantBuilder(self.page).build_tenants_view()
                     case "/rentals":
-                        rental_builder = RentalBuilder(self.page)
-                        view = rental_builder.build_rentals_view()
+                        view = RentalBuilder(self.page).build_rentals_view()
                     case "/finances":
-                        finance_builder = FinanceBuilder(self.page)
-                        view = finance_builder.build_finances_view()
+                        view = FinanceBuilder(self.page).build_finances_view()
+                    # Экраны создания записей (вложенные)
                     case "/add_car":
-                        car_builder = CarBuilder(self.page)
-                        view = car_builder.build_add_car_view()
+                        view = CarBuilder(self.page).build_add_car_view()
                     case "/add_tenant":
-                        tenant_builder = TenantBuilder(self.page)
-                        view = tenant_builder.build_add_tenant_view()
+                        view = TenantBuilder(self.page).build_add_tenant_view()
                     case "/add_rental":
-                        rental_builder = RentalBuilder(self.page)
-                        view = rental_builder.build_add_rental_view()
+                        view = RentalBuilder(self.page).build_add_rental_view()
                     case "/add_payment":
-                        finance_builder = FinanceBuilder(self.page)
-                        view = finance_builder.build_add_payment_view()
+                        view = FinanceBuilder(self.page).build_add_payment_view()
                     case _:
-                        home_builder = HomeBuilder(self.page)
-                        view = home_builder.build_home_view()
+                        is_root_route = True
+                        view = HomeBuilder(self.page).build_home_view()
         except Exception as ex:
             logger.exception(f"An error occurred while changing route to {e.route}.")
             view = self._build_error_view(str(ex), e.route)
 
         try:
+            view.route = e.route  # Обязательно сохраняем маршрут внутри самого View
             view.scroll = ft.ScrollMode.AUTO
-            self.page.views.clear()
+
+            # Если перешли на вкладку нижнего меню — очищаем историю,
+            # иначе — кладем новый экран поверх предыдущего в стек
+            if is_root_route:
+                self.page.views.clear()
+
             self.page.views.append(view)
             self.page.update()
         except Exception:
             logger.exception("An error occurred while updating the page.")
+
+    def view_pop(self, e: ft.ViewPopEvent) -> None:
+        """Handle Android system Back button / edge swipe."""
+        if len(self.page.views) > 1:
+            self.page.views.pop()
+            top_view = self.page.views[-1]
+            self.page.go(top_view.route)
 
     def _build_error_view(self, ex_str: str, route: str) -> ft.View:
         """Construct a standardized fallback view displaying routing or runtime errors.

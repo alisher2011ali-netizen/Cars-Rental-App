@@ -98,5 +98,6 @@
   "notes": "Заметки",
   "rental_shorter_than_period": "Период не может быть меньше 1 дня.",
   "car_already_rented": "Машина уже в аренде.",
-  "available": "Свободен"
+  "available": "Свободен",
+  "next_payment": "Следующая оплата"
 }
