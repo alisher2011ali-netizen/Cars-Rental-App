@@ -177,7 +177,7 @@ class CarBuilder(Builder):
                     ft.Button(
                         localization.back,
                         icon=ft.Icons.ARROW_BACK,
-                        on_click=self.page.run_task(self.page.push_route, "/"),
+                        on_click=self.page.run_task(self.page.push_route, "/rentals"),
                         align=ft.Alignment.CENTER,
                     ),
                 ],

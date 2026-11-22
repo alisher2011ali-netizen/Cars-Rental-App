@@ -90,5 +90,8 @@
   "upload_subpassport": "Upload sub-passport",
   "weekly": "Weekly",
   "weeks_short": "wk.",
-  "year_of_production": "Year of production"
+  "year_of_production": "Year of production",
+  "settings": "Settings",
+  "word_language": "Language",
+  "word_currency": "Currency"
 }

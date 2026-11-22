@@ -8,24 +8,22 @@ class WelcomeBuilder(Builder):
 
     def __init__(self, page: ft.Page) -> None:
         super().__init__(page)
-        self.language = "ru"
-        self.currency = "RUB"
 
-    def build_first_launch_view(self) -> ft.View:
+    def build_welcome_view(self) -> ft.View:
         def on_language_change(e: ft.ControlEvent) -> None:
             selected_language = e.control.value
             self.prefs.set("language_code", selected_language)
-            self.language = selected_language
+            localization.language = selected_language
             localization.load_lang(selected_language)
 
             # Rebuild the current view immediately so the newly loaded translation strings take effect across all labels
             self.page.views.clear()
-            self.page.views.append(self.build_first_launch_view())
+            self.page.views.append(self.build_welcome_view())
 
         def on_currency_change(e: ft.ControlEvent) -> None:
             selected_currency = e.control.value
             self.prefs.set("currency", selected_currency)
-            self.currency = selected_currency
+            localization.currency = selected_currency
             localization.currency = selected_currency
 
         content = ft.Column(
@@ -61,7 +59,7 @@ class WelcomeBuilder(Builder):
                                 ft.DropdownOption(key="en", text="English"),
                                 ft.DropdownOption(key="zh", text="中文"),
                             ],
-                            value=self.language,
+                            value=localization.language,
                             width=200,
                             on_select=on_language_change,
                         ),
@@ -77,12 +75,12 @@ class WelcomeBuilder(Builder):
                         ),
                         ft.Dropdown(
                             options=[
-                                ft.DropdownOption(key="RUB", text="RUB  ₽"),
-                                ft.DropdownOption(key="USD", text="USD  $"),
-                                ft.DropdownOption(key="CNY", text="CNY  ¥"),
+                                ft.DropdownOption(key="₽", text="RUB ₽"),
+                                ft.DropdownOption(key="$", text="USD $"),
+                                ft.DropdownOption(key="¥", text="CNY ¥"),
                                 ft.DropdownOption(key="KGS", text="KGS"),
                             ],
-                            value=self.currency,
+                            value=localization.currency,
                             width=200,
                             on_select=on_currency_change,
                         ),

@@ -90,5 +90,8 @@
   "upload_subpassport": "上传副护照",
   "weekly": "按周",
   "weeks_short": "周",
-  "year_of_production": "出厂年份"
+  "year_of_production": "出厂年份",
+  "settings": "设置",
+  "word_language": "语言",
+  "word_currency": "货币"
 }

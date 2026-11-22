@@ -99,5 +99,8 @@
   "rental_shorter_than_period": "Период не может быть меньше 1 дня.",
   "car_already_rented": "Машина уже в аренде.",
   "available": "Свободен",
-  "next_payment": "Следующая оплата"
+  "next_payment": "Следующая оплата",
+  "settings": "Настройки",
+  "word_language": "Язык",
+  "word_currency": "Валюта"
 }

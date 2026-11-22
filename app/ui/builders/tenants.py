@@ -460,7 +460,7 @@ class TenantBuilder(Builder):
                 active_rental.start_date, active_rental.end_date, active_rental.period
             )
 
-            next_date_str = next_date.strftime("%d.%m.%Y")
+            next_date_str = next_date.strftime("%d.%m.%Y") if next_date else None
             next_payment_control = ft.Container(
                 content=ft.Row(
                     [

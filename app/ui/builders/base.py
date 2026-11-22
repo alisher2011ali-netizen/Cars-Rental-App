@@ -23,7 +23,7 @@ class Builder:
         return ft.NavigationBar(
             destinations=[
                 ft.NavigationBarDestination(
-                    icon=ft.Icons.HOME, label=localization.main_menu
+                    icon=ft.Icons.KEY, label=localization.rentals
                 ),
                 ft.NavigationBarDestination(
                     icon=ft.Icons.CAR_RENTAL, label=localization.cars
@@ -32,11 +32,10 @@ class Builder:
                     icon=ft.Icons.PERSON, label=localization.tenants
                 ),
                 ft.NavigationBarDestination(
-                    icon=ft.Icons.KEY, label=localization.rentals
+                    icon=ft.Icons.ATTACH_MONEY, label=localization.finances
                 ),
                 ft.NavigationBarDestination(
-                    icon=ft.Icons.ATTACH_MONEY,
-                    label=localization.finances,
+                    icon=ft.Icons.SETTINGS, label=localization.settings
                 ),
             ],
             selected_index=current_index,
@@ -46,15 +45,15 @@ class Builder:
     async def _handle_nav_change(self, e: ft.ControlEvent) -> None:
         match e.control.selected_index:
             case 0:
-                await self.page.push_route("/")
+                await self.page.push_route("/rentals")
             case 1:
                 await self.page.push_route("/cars")
             case 2:
                 await self.page.push_route("/tenants")
             case 3:
-                await self.page.push_route("/rentals")
-            case 4:
                 await self.page.push_route("/finances")
+            case 4:
+                await self.page.push_route("/settings")
 
     async def go_back(self, e=None) -> None:
         """Возвращает на предыдущий экран из истории или на главную, если история пуста."""
@@ -63,7 +62,7 @@ class Builder:
             top_view = self.page.views[-1]
             await self.page.push_route(top_view.route)
         else:
-            await self.page.push_route("/")
+            await self.page.push_route("/rentals")
 
     def create_car_card(
         self, car: Car, car_images: list[str] | None = None

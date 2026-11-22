@@ -16,7 +16,7 @@ class Localization:
     ) -> None:
         self.strings = {}
         self.language = default_lang or "ru"
-        self.currency = default_currency or "RUB"
+        self.currency = default_currency or "₽"
         self.load_lang(self.language)
 
     def load_lang(self, lang_code: str) -> None:

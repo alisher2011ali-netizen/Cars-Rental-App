@@ -6,8 +6,8 @@ from ui.builders import (
     Builder,
     CarBuilder,
     FinanceBuilder,
-    HomeBuilder,
     RentalBuilder,
+    SettingsBuilder,
     TenantBuilder,
     WelcomeBuilder,
 )
@@ -22,12 +22,12 @@ class UIRouter:
         self.page = page
         self.builder = Builder(self.page)
         self.ROOT_ROUTES = {
-            "/",
-            "/first_launch",
+            "/welcome",
             "/cars",
             "/tenants",
             "/rentals",
             "/finances",
+            "/settings",
         }
 
     async def build(self) -> None:
@@ -44,8 +44,7 @@ class UIRouter:
                 view = fisrt_launch_builder.build_first_launch_view()
 
             else:
-                home_builder = HomeBuilder(self.page)
-                view = home_builder.build_home_view()
+                view = RentalBuilder(self.page).build_rentals_view()
 
         except Exception as ex:
             logger.exception("An error occurred while initializing.")
@@ -78,10 +77,10 @@ class UIRouter:
                 )
             else:
                 match e.route:
-                    case "/":
-                        view = HomeBuilder(self.page).build_home_view()
-                    case "/first_launch":
-                        view = WelcomeBuilder(self.page).build_first_launch_view()
+                    case "/welcome":
+                        view = WelcomeBuilder(self.page).build_welcome_view()
+                    case "/settings":
+                        view = SettingsBuilder(self.page).build_settings_view()
                     case "/cars":
                         view = CarBuilder(self.page).build_cars_view()
                     case "/tenants":
@@ -101,7 +100,7 @@ class UIRouter:
                         view = FinanceBuilder(self.page).build_add_payment_view()
                     case _:
                         is_root_route = True
-                        view = HomeBuilder(self.page).build_home_view()
+                        view = RentalBuilder(self.page).build_rentals_view()
         except Exception as ex:
             logger.exception(f"An error occurred while changing route to {e.route}.")
             view = self._build_error_view(str(ex), e.route)
