@@ -131,6 +131,16 @@ class TenantBuilder(Builder):
             self.get_complete_snack_bar()
             await self.page.push_route("/tenants")
 
+        upload_avatar = ft.Column(
+            [
+                ft.IconButton(ft.CircleAvatar(radius=40), on_click=pick_avatar_click),
+                ft.Text(
+                    "Загрузить аватар",
+                    size=14,
+                ),
+            ],
+            spacing=5,
+        )
         name_input = ft.TextField(label=localization.fullname, width=300)
 
         phone_input = ft.TextField(label=localization.phone, width=300)
@@ -142,15 +152,10 @@ class TenantBuilder(Builder):
                     ft.Text(
                         localization.new_tenant, size=24, weight=ft.FontWeight.BOLD
                     ),
+                    upload_avatar,
                     name_input,
                     phone_input,
                     debt_sum_input,
-                    ft.TextButton(
-                        localization.upload_avatar,
-                        icon=ft.Icons.UPLOAD_FILE,
-                        on_click=pick_avatar_click,
-                        margin=5,
-                    ),
                     ft.TextButton(
                         localization.upload_passport,
                         icon=ft.Icons.UPLOAD_FILE,

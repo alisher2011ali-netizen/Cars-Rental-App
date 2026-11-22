@@ -288,7 +288,7 @@ class Builder:
         nav_bar_idx: int,
         fab: ft.FloatingActionButton,
     ) -> ft.View:
-        """Build an empty-state view/"""
+        """Build an empty-state view."""
 
         return ft.View(
             route=route,
@@ -339,12 +339,10 @@ class Builder:
         )
 
     def get_back_button(self) -> ft.Button:
-        return (
-            ft.Button(
-                localization.back,
-                icon=ft.Icons.ARROW_BACK,
-                on_click=self.go_back,
-            ),
+        return ft.Button(
+            localization.back,
+            icon=ft.Icons.ARROW_BACK,
+            on_click=self.go_back,
         )
 
     def create_tenant_card(self, tenant: Tenant) -> ft.Container:
