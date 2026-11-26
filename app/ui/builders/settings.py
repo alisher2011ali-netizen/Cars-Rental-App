@@ -32,6 +32,13 @@ class SettingsBuilder(Builder):
             localization.currency = selected_currency
             localization.currency = selected_currency
 
+        async def on_theme_mode_change(e: ft.ControlEvent) -> None:
+            selected_theme_mode = e.control.value
+            await self.prefs.set("theme_mode", selected_theme_mode)
+            self.page.theme_mode = selected_theme_mode
+            self.page.views.clear()
+            self.page.views.append(self.build_settings_view())
+
         title = ft.AppBar(
             leading=ft.Icon(
                 icon=ft.Icons.SETTINGS,
@@ -45,51 +52,67 @@ class SettingsBuilder(Builder):
             ),
         )
 
-        content = ft.Column(
+        language_column = ft.Column(
             [
-                title,
-                ft.Column(
-                    [
-                        ft.Text(
-                            localization.word_language,
-                            size=20,
-                            text_align=ft.Alignment.CENTER,
-                        ),
-                        ft.Dropdown(
-                            options=[
-                                ft.DropdownOption(key="ru", text="Русский"),
-                                ft.DropdownOption(key="en", text="English"),
-                                ft.DropdownOption(key="zh", text="中文"),
-                            ],
-                            value=localization.language,
-                            width=200,
-                            on_select=on_language_change,
-                        ),
-                    ],
-                    spacing=5,
+                ft.Text(
+                    localization.word_language,
+                    size=20,
+                    text_align=ft.Alignment.CENTER,
                 ),
-                ft.Column(
-                    [
-                        ft.Text(
-                            localization.word_currency,
-                            size=20,
-                            text_align=ft.Alignment.CENTER,
-                        ),
-                        ft.Dropdown(
-                            options=[
-                                ft.DropdownOption(key="₽", text="RUB ₽"),
-                                ft.DropdownOption(key="$", text="USD $"),
-                                ft.DropdownOption(key="¥", text="CNY ¥"),
-                                ft.DropdownOption(key="KGS", text="KGS"),
-                            ],
-                            value=localization.currency,
-                            width=200,
-                            on_select=on_currency_change,
-                        ),
+                ft.Dropdown(
+                    options=[
+                        ft.DropdownOption(key="ru", text="Русский"),
+                        ft.DropdownOption(key="en", text="English"),
+                        ft.DropdownOption(key="zh", text="中文"),
                     ],
-                    spacing=5,
+                    value=localization.language,
+                    width=200,
+                    on_select=on_language_change,
                 ),
             ],
+            spacing=5,
+        )
+
+        currency_column = ft.Column(
+            [
+                ft.Text(
+                    localization.word_currency,
+                    size=20,
+                    text_align=ft.Alignment.CENTER,
+                ),
+                ft.Dropdown(
+                    options=[
+                        ft.DropdownOption(key="₽", text="RUB ₽"),
+                        ft.DropdownOption(key="$", text="USD $"),
+                        ft.DropdownOption(key="¥", text="CNY ¥"),
+                        ft.DropdownOption(key="KGS", text="KGS"),
+                    ],
+                    value=localization.currency,
+                    width=200,
+                    on_select=on_currency_change,
+                ),
+            ],
+            spacing=5,
+        )
+
+        theme_mode_column = ft.Column(
+            [
+                ft.Text(localization.theme, size=20, text_align=ft.Alignment.CENTER),
+                ft.Dropdown(
+                    options=[
+                        ft.DropdownOption(key="system", text=localization.default),
+                        ft.DropdownOption(key="light", text=localization.light),
+                        ft.DropdownOption(key="dark", text=localization.dark),
+                    ],
+                    value="system",
+                    width=200,
+                    on_select=on_theme_mode_change,
+                ),
+            ]
+        )
+
+        content = ft.Column(
+            [title, language_column, currency_column, theme_mode_column],
             alignment=ft.Alignment.CENTER,
             horizontal_alignment=ft.Alignment.CENTER,
             spacing=20,

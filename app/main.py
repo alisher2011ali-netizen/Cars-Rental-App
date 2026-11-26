@@ -28,8 +28,10 @@ async def main(page: ft.Page) -> None:
                 linux=ft.PageTransitionTheme.NONE,
             ),
         )
-        page.window.width = 360
-        page.window.height = 780
+        prefs = ft.SharedPreferences()
+        page.theme_mode = await prefs.get("theme_mode")
+        # page.window.width = 360
+        # page.window.height = 780
         ui = UIRouter(page)
         await ui.build()
 

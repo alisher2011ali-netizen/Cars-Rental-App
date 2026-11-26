@@ -39,9 +39,9 @@ class UIRouter:
         try:
             # Check for non-False values to treat an unset preference key (None) as a first-launch event
             if await self.builder.prefs.get("is_first_launch") != False:
-                fisrt_launch_builder = WelcomeBuilder(self.page)
+                welcome_builder = WelcomeBuilder(self.page)
                 await self.builder.prefs.set("is_first_launch", True)
-                view = fisrt_launch_builder.build_first_launch_view()
+                view = welcome_builder.build_welcome_view()
 
             else:
                 view = RentalBuilder(self.page).build_rentals_view()

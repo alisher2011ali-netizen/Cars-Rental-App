@@ -1,11 +1,11 @@
 import logging
+import shutil
 import uuid
 from pathlib import Path
 
 from core.config import config
 from core.models import Image, Payment, PaymentType, session_factory
 from parsing.parser import process_sber_pdf
-from services.file_manager import FileManager
 from sqlalchemy.orm import Session
 
 IMAGE_SUBDIRS: dict[str, str] = {
@@ -23,7 +23,14 @@ class Connector:
     """Coordinate database persistence, file management, and external data parsing."""
 
     def __init__(self) -> None:
-        self.file_manager = FileManager()
+        pass
+
+    def copy_file(self, source_path: str, destination_path: str) -> str:
+        Path(destination_path).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, destination_path)
+
+        logger.info(f"Copied file from: {source_path} to: {destination_path}.")
+        return destination_path
 
     async def save_image(
         self,
