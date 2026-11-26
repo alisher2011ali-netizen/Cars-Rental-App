@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable, Coroutine
 from datetime import datetime, timedelta
 from typing import Any
@@ -9,16 +10,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from ui.builders.base import Builder
 
+logger = logging.getLogger()
+
 
 class TenantBuilder(Builder):
     """Build UI views and controls for tenant directory browsing and creation."""
 
     def build_tenants_view(self) -> ft.View:
         """Build the tenants list view."""
-        db = session_factory()
+        with session_factory() as db:
+            stmt = select(Tenant).options(joinedload(Tenant.avatar))
+            tenants_list = db.scalars(stmt).all()
 
-        stmt = select(Tenant).options(joinedload(Tenant.avatar))
-        tenants_list = db.scalars(stmt)
         fab = self.build_fab("/add_tenant", localization.add_tenant)
         title = ft.AppBar(
             leading=ft.Icon(
@@ -69,9 +72,6 @@ class TenantBuilder(Builder):
 
     def build_add_tenant_view(self) -> ft.View:
         """Build the tenant adding view."""
-
-        db = session_factory()
-
         paths = {
             "avatar": None,
             "passport": None,
@@ -106,15 +106,19 @@ class TenantBuilder(Builder):
         )
 
         async def save_tenant(e: ft.ControlEvent | None = None) -> None:
-            new_tenant = Tenant(
-                name=name_input.value.strip(),
-                phone_number=phone_input.value,
-                debt_sum=float(debt_sum_input.value) if debt_sum_input.value else 0.0,
-            )
-            db.add(new_tenant)
-            db.commit()
-            # Refresh to load server-generated identity columns required for child image links
-            db.refresh(new_tenant)
+            with session_factory() as db:
+                new_tenant = Tenant(
+                    name=name_input.value.strip(),
+                    phone_number=phone_input.value,
+                    debt_sum=float(debt_sum_input.value)
+                    if debt_sum_input.value
+                    else 0.0,
+                )
+                db.add(new_tenant)
+                db.commit()
+                db.refresh(new_tenant)
+
+            logger.info(f"New TENANT created. ID: {new_tenant.id}")
 
             for img_category in ["avatar", "passport", "sub_passport", "drive_license"]:
                 img_path = paths.get(img_category)
@@ -125,7 +129,6 @@ class TenantBuilder(Builder):
                         object_id=new_tenant.id,
                         object_type="tenant",
                         category=img_category,
-                        db=db,
                     )
 
             self.get_complete_snack_bar()

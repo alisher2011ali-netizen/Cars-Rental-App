@@ -1,3 +1,4 @@
+import logging
 from datetime import date, datetime, timedelta
 
 import flet as ft
@@ -6,6 +7,8 @@ from services.localization import localization
 from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 from ui.builders.base import Builder
+
+logger = logging.getLogger()
 
 
 class RentalBuilder(Builder):
@@ -285,19 +288,22 @@ class RentalBuilder(Builder):
                 show_error(localization.car_already_rented)  # новый ключ
                 return
 
-            db.add(
-                Rental(
-                    car_id=car_id,
-                    tenant_id=tenant_id,
-                    start_date=data["start"],
-                    end_date=data["end"],
-                    period=data["period"],
-                    price_per_period=data["price"],
-                    total_cost=data["total"],
-                    notes=notes_field.value or None,
-                )
+            new_rental = Rental(
+                car_id=car_id,
+                tenant_id=tenant_id,
+                start_date=data["start"],
+                end_date=data["end"],
+                period=data["period"],
+                price_per_period=data["price"],
+                total_cost=data["total"],
+                notes=notes_field.value or None,
             )
+
+            db.add(new_rental)
             db.commit()
+            db.refresh(new_rental)
+
+            logger.info(f"New RENTAL created. ID: {new_rental.id}")
 
             self.get_complete_snack_bar()
             await self.page.push_route("/rentals")

@@ -1,8 +1,12 @@
+import logging
+
 import flet as ft
 from core.models import Car, session_factory
 from services.localization import localization
 from sqlalchemy import select
 from ui.builders.base import Builder
+
+logger = logging.getLogger()
 
 
 class CarBuilder(Builder):
@@ -113,6 +117,9 @@ class CarBuilder(Builder):
             )
             db.add(new_car)
             db.commit()
+            db.refresh(new_car)
+
+            logger.info(f"New CAR added. ID: {new_car.id}")
 
             for image_path in selected_images_paths:
                 await self.connector.save_image(

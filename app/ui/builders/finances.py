@@ -1,8 +1,12 @@
+import logging
+
 import flet as ft
 from core.models import Payment, PaymentType, session_factory
 from services.localization import localization
 from sqlalchemy import select
 from ui.builders.base import Builder
+
+logger = logging.getLogger()
 
 
 class FinanceBuilder(Builder):
@@ -111,6 +115,9 @@ class FinanceBuilder(Builder):
             )
             db.add(new_payment)
             db.commit()
+            db.refresh(new_payment)
+
+            logger.info(f"New PAYMENT created. ID: {new_payment.id}")
 
             self.page.overlay.append(self.get_complete_snack_bar())
             await self.page.push_route("/finances")

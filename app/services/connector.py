@@ -1,12 +1,13 @@
+import asyncio
 import logging
-import shutil
 import uuid
 from pathlib import Path
 
 from core.config import config
 from core.models import Image, Payment, PaymentType, session_factory
 from parsing.parser import process_sber_pdf
-from sqlalchemy.orm import Session
+from PIL import Image as PILImage
+from PIL import ImageOps
 
 IMAGE_SUBDIRS: dict[str, str] = {
     "car_photo": "cars",
@@ -25,52 +26,46 @@ class Connector:
     def __init__(self) -> None:
         pass
 
-    def copy_file(self, source_path: str, destination_path: str) -> str:
-        Path(destination_path).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_path, destination_path)
+    def _process_and_save(
+        src_path: str, dst_path: str, max_size: int = 1600, quality: int = 82
+    ) -> None:
+        Path(dst_path).parent.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Copied file from: {source_path} to: {destination_path}.")
-        return destination_path
+        with PILImage.open(src_path) as img:  # Image.open отлично принимает Path
+            img = ImageOps.exif_transpose(img)
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            img.thumbnail((max_size, max_size), PILImage.Resampling.LANCZOS)
+            img.save(dst_path, format="JPEG", quality=quality, optimize=True)
 
     async def save_image(
-        self,
-        *,
-        image_path: str,
-        object_id: int,
-        object_type: str,
-        category: str = "car_photo",
-        db: Session | None = None,
+        self, image_path: str, object_id: int, object_type: str, category: str
     ) -> str:
-        """Store an uploaded image on disk and register its metadata in the database."""
-
-        if not db:
-            db = session_factory()
-
+        """Настоящий неблокирующий асинхронный метод для Flet."""
         try:
-            subdir = IMAGE_SUBDIRS.get(category, f"{object_type}s/{category}")
+            subdir = IMAGE_SUBDIRS.get(category, "other")
 
-            unique_suffix = uuid.uuid4().hex[:8]
-            file_name = f"{object_id}_{unique_suffix}.jpg"
-            dest_path = Path(config.app_data_path) / "images" / subdir / file_name
-
-            dest_str = str(dest_path)
-            self.file_manager.copy_file(image_path, dest_str)
-
-            new_image = Image(
-                object_type=object_type,
-                object_id=object_id,
-                category=category,
-                path=dest_str,
-            )
-            db.add(new_image)
-            db.commit()
-            return dest_str
+            unique = uuid.uuid4().hex[:8]
+            file_name = f"{object_id}_{unique}.jpg"
+            dst_path = str(Path(config.app_data_path) / "images" / subdir / file_name)
 
         except Exception:
             logger.exception(
                 f"An error occurred while saving the image for {object_type} {object_id}."
             )
             return ""
+
+        await asyncio.to_thread(self._process_and_save_sync, image_path, dst_path)
+        with session_factory as db:
+            new_image = Image(
+                object_type=object_type,
+                object_id=object_id,
+                category=category,
+                path=dst_path,
+            )
+            db.add(new_image)
+            db.commit()
+        return dst_path
 
     def save_statement(self, file_path: str) -> bool:
         """Parse an external bank PDF statement and persist all extracted payments."""

@@ -366,7 +366,7 @@ class Builder:
             )
         else:
             avatar = ft.CircleAvatar(
-                foreground_image_url=tenant.avatar.path,
+                foreground_image_src=tenant.avatar.path,
                 radius=28,
             )
 
