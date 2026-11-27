@@ -4,7 +4,14 @@ import uuid
 from pathlib import Path
 
 from core.config import config
-from core.models import Image, Payment, PaymentType, session_factory
+from core.models import (
+    Image,
+    ImageCategory,
+    ImageObjectType,
+    Payment,
+    PaymentType,
+    session_factory,
+)
 from parsing.parser import process_sber_pdf
 from PIL import Image as PILImage
 from PIL import ImageOps
@@ -27,11 +34,11 @@ class Connector:
         pass
 
     def _process_and_save(
-        src_path: str, dst_path: str, max_size: int = 1600, quality: int = 82
+        self, src_path: str, dst_path: str, max_size: int = 1600, quality: int = 82
     ) -> None:
         Path(dst_path).parent.mkdir(parents=True, exist_ok=True)
 
-        with PILImage.open(src_path) as img:  # Image.open отлично принимает Path
+        with PILImage.open(src_path) as img:
             img = ImageOps.exif_transpose(img)
             if img.mode in ("RGBA", "P"):
                 img = img.convert("RGB")
@@ -39,7 +46,11 @@ class Connector:
             img.save(dst_path, format="JPEG", quality=quality, optimize=True)
 
     async def save_image(
-        self, image_path: str, object_id: int, object_type: str, category: str
+        self,
+        image_path: str,
+        object_id: int,
+        object_type: ImageObjectType,
+        category: ImageCategory,
     ) -> str:
         """Настоящий неблокирующий асинхронный метод для Flet."""
         try:
@@ -55,8 +66,8 @@ class Connector:
             )
             return ""
 
-        await asyncio.to_thread(self._process_and_save_sync, image_path, dst_path)
-        with session_factory as db:
+        await asyncio.to_thread(self._process_and_save, image_path, dst_path)
+        with session_factory() as db:
             new_image = Image(
                 object_type=object_type,
                 object_id=object_id,
@@ -69,23 +80,21 @@ class Connector:
 
     def save_statement(self, file_path: str) -> bool:
         """Parse an external bank PDF statement and persist all extracted payments."""
-
-        db = session_factory()
-
         try:
             data = process_sber_pdf(file_path)
-            for payment in data:
-                # Infer transaction direction based on sign since raw statements combine both flows
-                payment["type"] = (
-                    PaymentType.income
-                    if payment["value_account_currency"] >= 0
-                    else PaymentType.expense
-                )
-                payment["amount"] = payment["value_account_currency"]
+            with session_factory() as db:
+                for payment in data:
+                    # Infer transaction direction based on sign since raw statements combine both flows
+                    payment["type"] = (
+                        PaymentType.income
+                        if payment["value_account_currency"] >= 0
+                        else PaymentType.expense
+                    )
+                    payment["amount"] = payment["value_account_currency"]
 
-                new_payment = Payment(is_parsed=True, **payment)
-                db.add(new_payment)
-            db.commit()
+                    new_payment = Payment(is_parsed=True, **payment)
+                    db.add(new_payment)
+                db.commit()
             return True
 
         except Exception:

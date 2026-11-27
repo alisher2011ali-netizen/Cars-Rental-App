@@ -16,9 +16,13 @@ class RentalBuilder(Builder):
 
     def build_rentals_view(self) -> ft.View:
         """Build the rentals list view."""
-        db = session_factory()
+        with session_factory() as db:
+            stmt = select(Rental).options(
+                joinedload(Rental.car).selectinload(Car.images),
+                joinedload(Rental.tenant).selectinload(Tenant.avatar),
+            )
+            rentals_list = db.scalars(stmt).unique().all()
 
-        rentals_list = db.scalars(select(Rental)).all()
         fab = self.build_fab("/add_rental", localization.add_rental)
         title = ft.AppBar(
             leading=ft.Icon(
@@ -68,16 +72,15 @@ class RentalBuilder(Builder):
     def build_add_rental_view(self) -> ft.View:
         """Build the rental adding view."""
 
-        # Загружаем данные и сразу закрываем сессию: в замыканиях держим только простые значения
-        db = session_factory()
-        cars = [
-            (car.id, f"{car.brand} {car.model} ({car.plate_number})")
-            for car in db.scalars(select(Car)).all()
-        ]
-        tenants = [
-            (t.id, f"{t.name} ({t.phone_number})")
-            for t in db.scalars(select(Tenant)).all()
-        ]
+        with session_factory() as db:
+            cars = [
+                (car.id, f"{car.brand} {car.model} ({car.plate_number})")
+                for car in db.scalars(select(Car)).all()
+            ]
+            tenants = [
+                (t.id, f"{t.name} ({t.phone_number})")
+                for t in db.scalars(select(Tenant)).all()
+            ]
 
         if not cars or not tenants:
             snack = ft.SnackBar(
@@ -277,31 +280,33 @@ class RentalBuilder(Builder):
             car_id = int(car_dropdown.value)
             tenant_id = int(tenant_dropdown.value)
             # Проверка пересечения с существующими арендами этой машины
-            clash = db.scalars(
-                select(Rental).where(
-                    Rental.car_id == car_id,
-                    Rental.start_date < data["end"],
-                    Rental.end_date > data["start"],
+            with session_factory() as db:
+                clash = db.scalars(
+                    select(Rental).where(
+                        Rental.car_id == car_id,
+                        Rental.start_date < data["end"],
+                        Rental.end_date > data["start"],
+                    )
+                ).first()
+
+                if clash:
+                    show_error(localization.car_already_rented)  # новый ключ
+                    return
+
+                new_rental = Rental(
+                    car_id=car_id,
+                    tenant_id=tenant_id,
+                    start_date=data["start"],
+                    end_date=data["end"],
+                    period=data["period"],
+                    price_per_period=data["price"],
+                    total_cost=data["total"],
+                    notes=notes_field.value or None,
                 )
-            ).first()
-            if clash:
-                show_error(localization.car_already_rented)  # новый ключ
-                return
 
-            new_rental = Rental(
-                car_id=car_id,
-                tenant_id=tenant_id,
-                start_date=data["start"],
-                end_date=data["end"],
-                period=data["period"],
-                price_per_period=data["price"],
-                total_cost=data["total"],
-                notes=notes_field.value or None,
-            )
-
-            db.add(new_rental)
-            db.commit()
-            db.refresh(new_rental)
+                db.add(new_rental)
+                db.commit()
+                db.refresh(new_rental)
 
             logger.info(f"New RENTAL created. ID: {new_rental.id}")
 
@@ -548,6 +553,7 @@ class RentalBuilder(Builder):
                 if rental_to_delete:
                     db.delete(rental_to_delete)
                     db.commit()
+
             self.page.pop_dialog()
             self.get_complete_snack_bar()
             await self.page.push_route("/rentals")

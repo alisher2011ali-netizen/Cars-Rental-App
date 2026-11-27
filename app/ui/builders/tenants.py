@@ -76,13 +76,13 @@ class TenantBuilder(Builder):
             "avatar": None,
             "passport": None,
             "sub_passport": None,
-            "drive_license": None,
+            "driver_license": None,
         }
 
         avatar_picker = ft.FilePicker()
         passport_picker = ft.FilePicker()
         sub_passport_picker = ft.FilePicker()
-        drive_license_picker = ft.FilePicker()
+        driver_license_picker = ft.FilePicker()
 
         def make_picker_callback(
             picker: ft.FilePicker, path_key: str
@@ -101,8 +101,8 @@ class TenantBuilder(Builder):
         pick_sub_passport_click = make_picker_callback(
             sub_passport_picker, "sub_passport"
         )
-        pick_drive_license_click = make_picker_callback(
-            drive_license_picker, "drive_license"
+        pick_driver_license_click = make_picker_callback(
+            driver_license_picker, "driver_license"
         )
 
         async def save_tenant(e: ft.ControlEvent | None = None) -> None:
@@ -120,7 +120,12 @@ class TenantBuilder(Builder):
 
             logger.info(f"New TENANT created. ID: {new_tenant.id}")
 
-            for img_category in ["avatar", "passport", "sub_passport", "drive_license"]:
+            for img_category in [
+                "avatar",
+                "passport",
+                "sub_passport",
+                "driver_license",
+            ]:
                 img_path = paths.get(img_category)
 
                 if img_path:
@@ -174,7 +179,7 @@ class TenantBuilder(Builder):
                     ft.TextButton(
                         localization.upload_driver_license,
                         icon=ft.Icons.UPLOAD_FILE,
-                        on_click=pick_drive_license_click,
+                        on_click=pick_driver_license_click,
                         margin=5,
                     ),
                     ft.Button(
@@ -200,9 +205,20 @@ class TenantBuilder(Builder):
         tenant_id: int,
     ) -> ft.View:
         """Build a tenant details view."""
-        db = session_factory()
+        with session_factory() as db:
+            stmt = (
+                select(Tenant)
+                .where(Tenant.id == tenant_id)
+                .options(
+                    joinedload(Tenant.avatar),
+                    joinedload(Tenant.passport),
+                    joinedload(Tenant.sub_passport),
+                    joinedload(Tenant.driver_license),
+                    joinedload(Tenant.rentals),
+                )
+            )
+            tenant = db.scalars(stmt).unique().first()
 
-        tenant = db.get(Tenant, tenant_id)
         if not tenant:
             return ft.View(
                 route=f"/tenants/{tenant_id}",
@@ -231,15 +247,6 @@ class TenantBuilder(Builder):
 
         # --- 1. Аватар (если нет — блок пустой) ---
         avatar_img = getattr(tenant, "avatar", None)
-        if not avatar_img and hasattr(tenant, "images"):
-            avatar_img = next(
-                (
-                    img
-                    for img in tenant.images
-                    if getattr(img, "category", "") == "avatar"
-                ),
-                None,
-            )
 
         if avatar_img:
             avatar_control = ft.Container(
@@ -582,8 +589,9 @@ class TenantBuilder(Builder):
         async def delete_tenant_confirm(e):
             # TODO: fix it so that EVERYTHING related is deleted
             confirm_tenant_dialog.open = False
-            db.delete(tenant)
-            db.commit()
+            with session_factory() as db:
+                db.delete(tenant)
+                db.commit()
             self.page.update()
             await self.page.push_route("/tenants")
 

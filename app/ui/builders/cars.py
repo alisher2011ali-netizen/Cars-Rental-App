@@ -4,6 +4,7 @@ import flet as ft
 from core.models import Car, session_factory
 from services.localization import localization
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from ui.builders.base import Builder
 
 logger = logging.getLogger()
@@ -14,9 +15,10 @@ class CarBuilder(Builder):
 
     def build_cars_view(self) -> ft.View:
         """Build the cars list view."""
-        db = session_factory()
+        with session_factory() as db:
+            stmt = select(Car).options(joinedload(Car.images))
+            cars_list = db.scalars(stmt).unique().all()
 
-        cars_list = db.scalars(select(Car)).all()
         fab = self.build_fab("/add_car", localization.add_car)
         title = ft.AppBar(
             leading=ft.Icon(
@@ -81,8 +83,6 @@ class CarBuilder(Builder):
 
     def build_add_car_view(self) -> ft.View:
         """Build the vehicle adding view."""
-        db = session_factory()
-
         selected_images_paths = []
 
         file_picker = ft.FilePicker()
@@ -108,22 +108,26 @@ class CarBuilder(Builder):
                 self.page.overlay.append(snack)
                 return
 
-            new_car = Car(
-                brand=brand_input.value,
-                model=model_input.value,
-                year=year,
-                plate_number=plate_num_input.value,
-                region_code=region_code_input.value,
-            )
-            db.add(new_car)
-            db.commit()
-            db.refresh(new_car)
+            with session_factory() as db:
+                new_car = Car(
+                    brand=brand_input.value,
+                    model=model_input.value,
+                    year=year,
+                    plate_number=plate_num_input.value,
+                    region_code=region_code_input.value,
+                )
+                db.add(new_car)
+                db.commit()
+                db.refresh(new_car)
 
             logger.info(f"New CAR added. ID: {new_car.id}")
 
             for image_path in selected_images_paths:
                 await self.connector.save_image(
-                    image_path=image_path, object_id=new_car.id, object_type="car"
+                    image_path=image_path,
+                    object_id=new_car.id,
+                    object_type="car",
+                    category="car_photo",
                 )
 
             self.get_complete_snack_bar()
@@ -172,9 +176,14 @@ class CarBuilder(Builder):
 
     def build_car_details_view(self, car_id: int) -> ft.View:
         """Construct the detailed vehicle view."""
-        db = session_factory()
+        with session_factory() as db:
+            stmt = (
+                select(Car)
+                .where(Car.id == car_id)
+                .options(joinedload(Car.images), joinedload(Car.rentals))
+            )
+            car = db.scalars(stmt).unique().first()
 
-        car = db.get(Car, car_id)
         if not car:
             return ft.View(
                 route=f"/cars/{car_id}",
@@ -365,8 +374,9 @@ class CarBuilder(Builder):
         async def delete_car_confirm(e):
             # TODO: fix it so that EVERYTHING related is deleted
             confirm_car_dialog.open = False
-            db.delete(car)
-            db.commit()
+            with session_factory() as db:
+                db.delete(car)
+                db.commit()
             self.page.update()
             await self.page.push_route("/cars")
 

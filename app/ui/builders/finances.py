@@ -14,10 +14,9 @@ class FinanceBuilder(Builder):
 
     def build_finances_view(self) -> ft.View:
         """Build the payments list view."""
+        with session_factory() as db:
+            payments_list = db.scalars(select(Payment)).all()
 
-        db = session_factory()
-
-        payments_list = db.scalars(select(Payment)).all()
         title = ft.AppBar(
             leading=ft.Icon(
                 icon=ft.Icons.ATTACH_MONEY,
@@ -92,7 +91,6 @@ class FinanceBuilder(Builder):
 
     def build_add_payment_view(self) -> ft.View:
         """Build the payment adding view."""
-        db = session_factory()
 
         async def save_payment(e: ft.ControlEvent) -> None:
             # Reject non-digit inputs before database persistence to prevent cast exceptions
@@ -108,14 +106,15 @@ class FinanceBuilder(Builder):
                 if type_dropdown.value == "income"
                 else PaymentType.expense
             )
-            new_payment = Payment(
-                amount=amount_input.value,
-                notes=notes_input.value,
-                type=payment_type,
-            )
-            db.add(new_payment)
-            db.commit()
-            db.refresh(new_payment)
+            with session_factory() as db:
+                new_payment = Payment(
+                    amount=amount_input.value,
+                    notes=notes_input.value,
+                    type=payment_type,
+                )
+                db.add(new_payment)
+                db.commit()
+                db.refresh(new_payment)
 
             logger.info(f"New PAYMENT created. ID: {new_payment.id}")
 

@@ -37,7 +37,7 @@ class ImageCategory(str, enum.Enum):
     avatar = "avatar"
     passport = "passport"
     sub_passport = "sub_passport"
-    drive_license = "drive_license"
+    driver_license = "driver_license"
     car_photo = "car_photo"
 
 
@@ -140,7 +140,7 @@ class Tenant(Base):
         avatar (Image): Read-only reference to the tenant's profile avatar.
         passport (Image): Read-only reference to the tenant's primary passport page.
         sub_passport (Image): Read-only reference to the secondary passport/registration page.
-        drive_license (Image): Read-only reference to the driver's license image.
+        driver_license (Image): Read-only reference to the driver's license image.
         created_at (datetime): Timestamp when the record was created.
         updated_at (datetime | None): Timestamp when the record was last modified.
         rentals (list[Rental]): Leases associated with the tenant.
@@ -176,9 +176,9 @@ class Tenant(Base):
         uselist=False,
         viewonly=True,
     )
-    drive_license: Mapped["Image"] = relationship(
+    driver_license: Mapped["Image"] = relationship(
         "Image",
-        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.drive_license}')",
+        primaryjoin=f"and_(Tenant.id==Image.object_id, Image.object_type=='tenant', Image.category=='{ImageCategory.driver_license}')",
         foreign_keys=[Image.object_id],
         uselist=False,
         viewonly=True,
